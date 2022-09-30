@@ -1,0 +1,21 @@
+Made module.
+Made.
+Made.
+Made lambda!
+Made.
+Made.
+Made.
+Made lambda!
+Made.
+Made.
+[ A := Set : Set ;
+  p := _ : :- A == ((: Set) Set) ;
+  \ X : Set ->
+  B := Set : Set ;
+  q := _ : :- B == ((: Set) Set) ;
+  C := HOPE? : Set ;
+  \ Y : Set ->
+  r := HOPE? : :- C == Y ;
+  s := HOPE? : :- C == B ;
+]
+Loaded.

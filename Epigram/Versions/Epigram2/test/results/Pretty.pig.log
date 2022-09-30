@@ -1,0 +1,40 @@
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+f : Set -> Set
+g : Set -> Set -> Set
+h : Set -> Set -> Set
+h2 : (Set -> Set) -> Set
+h3 : Set -> (Set -> Set) -> Set
+h4 : (Set -> Set -> Set) -> Set
+h5 : (Set -> Set) -> Set -> Set
+h6 : ((Set -> Set) -> Set) -> Set
+A : Set
+a : Set
+P : Prop
+G : :- a == a
+k : (x : Set)(y : Set) -> :- x == y -> Set
+B : Set
+y : Sig (x : Set ; x -> Set)
+C : Set
+z : Sig (x : Set ; Set ; Set ;)
+Enum ['a 'b]
+Sig (x : Set ; x -> Set)
+f.Goal1 (Sig (x : Set ; x -> Set))
+[Set , \ x -> f.Goal1 x]
+[Set Set Set]
+Loaded.

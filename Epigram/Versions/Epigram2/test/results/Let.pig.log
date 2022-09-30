@@ -1,0 +1,32 @@
+Let there be a.
+Going to root...
+: Set
+Let there be f.
+Going to root...
+(X : Set) (x : X) : Set
+Let there be g.
+Going to root...
+{q : :- TT} (X : Set) : X
+Let there be h.
+Going to root...
+(X : Set) {q : :- (FF => Inh X)} : X
+Let there be coe2.
+Ta.
+Going to root...
+Let there be id.
+Ta.
+Going to root...
+Made.
+Made.
+a
+A
+Made.
+b
+A
+Made.
+c
+Set
+Made.
+d
+Set
+Loaded.

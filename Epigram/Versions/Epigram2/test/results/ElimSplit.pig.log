@@ -1,0 +1,24 @@
+Made.
+Made.
+Made.
+Appended goal!
+Made lambda!
+Eliminated. Subgoals awaiting work...
+Going to root...
+[ X := ? : Set ;
+  Y := ? : X -> Set ;
+  Z := ? : Set ;
+  f
+    [ lm := ? : (x : X)(y : Y x) -> Z ;
+      \ xy : Sig X Y ->
+      eif
+        := [((P : Sig X Y -> Set)(p : (x : X)(y : Y x) -> P [x , y]) -> P xy) , split X Y xy] : Sig (ssv : Set ; ssv) ;
+      makeE
+        [ motive
+            [ \ xf : Sig X Y ->
+            ] Z : Set ;
+          method := lm : (x : X)(y : Y x) -> motive [x , y] ;
+        ] eif - motive method : motive xy ;
+    ] makeE : Z ;
+]
+Loaded.

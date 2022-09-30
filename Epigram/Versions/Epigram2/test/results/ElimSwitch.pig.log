@@ -1,0 +1,24 @@
+Made.
+Appended goal!
+Made lambda!
+Made lambda!
+Eliminated. Subgoals awaiting work...
+Going out...
+Going out...
+[ e := ['a 'b 'c] : EnumU ;
+  f
+    [ lm
+        := ? : Sig ((y : Set) -> Set ; (y : Set) -> Set ; (y : Set) -> Set ;) ;
+      \ x : Enum ['a 'b 'c] ->
+      \ y : Set ->
+      eif
+        := [((p : Enum ['a 'b 'c] -> Set)(b : Sig (p 'a ; p 'b ; p 'c ;)) -> p x) , switch e x] : Sig (ssv : Set ; ssv) ;
+      makeE
+        [ motive
+            [ \ xf : Enum ['a 'b 'c] ->
+            ] ((y : Set) -> Set) : Set ;
+          method := lm : Sig (motive 'a ; motive 'b ; motive 'c ;) ;
+        ] eif - motive method : motive x ;
+    ] makeE y : Set ;
+]
+Loaded.

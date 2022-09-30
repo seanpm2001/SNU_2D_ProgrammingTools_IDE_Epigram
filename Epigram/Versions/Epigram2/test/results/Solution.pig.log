@@ -1,0 +1,40 @@
+Made.
+Made.
+Made.
+Solved.
+[ B := ? : Set -> Set ;
+  A := (B Set -> B Set) : Set ;
+  B := B^1 : Set -> Set ;
+  C := B Set : Set ;
+]
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: solveHole: A_0 is not a hole.
+Made module.
+Made.
+Made.
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: solveHole: you can't define something in terms of itself!
+Made lambda!
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: solveHole: param M_4.X_2 occurs illegally.
+[ D := ? : Set ;
+  d := ? : D ;
+  \ X : Set ->
+]
+Going out...
+Made.
+Solved.
+[ B := ? : Set -> Set ;
+  A := (B Set -> B Set) : Set ;
+  B := B^1 : Set -> Set ;
+  C := B Set : Set ;
+  M
+    [ D := ? : Set ;
+      d := ? : D ;
+      \ X : Set ->
+    ] ;
+  hope := HOPE? : :- M.D == ((: Set) Set) ;
+  G := coe M.D Set hope M.d : Set ;
+  hope := hope^1 : :- M.D == ((: Set) Set) ;
+]
+Loaded.

@@ -1,0 +1,34 @@
+Data'd.
+Made.
+Made.
+Let there be plus.
+Eliminated and simplified.
+Ta.
+Ta.
+Going to root...
+Made module.
+Made lambda!
+Appended goal!
+Thank you.
+Appended goal!
+Made lambda!
+Thank you.
+Made.
+Made.
+Made.
+Let there be vappend.
+Eliminated and simplified.
+Hurrah!
+Hurrah!
+Going to root...
+Made.
+'nil
+Made.
+'cons ('suc 'zero) 'a ('cons 'zero 'b 'nil)
+'cons ('suc ('suc ('suc 'zero))) 'a ('cons ('suc ('suc 'zero)) 'b ('cons ('suc 'zero) 'a ('cons 'zero 'b 'nil)))
+Let there be vtail.
+Eliminated and simplified.
+Hurrah!
+Going to root...
+'cons 'zero 'b 'nil
+Loaded.

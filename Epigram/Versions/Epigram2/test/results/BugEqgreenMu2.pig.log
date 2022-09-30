@@ -1,0 +1,3 @@
+FF && FF && FF
+(Q : :- ((: Set) (Mu ('constD (Sig ())))) == ((: Set) (Mu ('sumD ['nil] [('constD (Sig ()))]))))(s : Mu ('constD (Sig ()))) -> Mu ('sumD ['nil] [('constD (Sig ()))])
+Loaded.

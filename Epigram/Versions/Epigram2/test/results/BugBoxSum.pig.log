@@ -1,0 +1,7 @@
+Sig ()
+Sig ()
+Sig (Th : (xf : Enum (v !)) -> P (v - ! xf) ;)
+Sig (Ch : P (v - !) ; Dh : P (v - - !) ;)
+Sig (Th : (xf : v !) -> P (v - ! xf) ;)
+Sig (Th : (xf : v !) -> P (v - ! xf) ;)
+Loaded.
