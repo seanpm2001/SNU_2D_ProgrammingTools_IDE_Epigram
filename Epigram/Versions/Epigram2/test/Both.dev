@@ -1,0 +1,12 @@
+[ f
+    [ \ x : Set ->
+      g := ? : Set ;
+      g := g^1 : Set ;
+    ] ? : Set ;
+
+  h [ (y : Set) ->
+      k [ (z : Set) ->
+          p := ? : Set ;
+        ] ? : Set ;
+    ] ? : Set ;
+]

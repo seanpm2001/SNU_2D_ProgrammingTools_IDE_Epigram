@@ -1,0 +1,17 @@
+make A := ? : Set ;
+make B := ? : Set -> Set ;
+make C := B Set : Set ;
+solve A C -> C ;
+show state ;
+solve A B Set ;
+module M ;
+make D := ? : Set ;
+make d := ? : D ;
+solve d d ;
+lambda X : Set ;
+solve D X ;
+show state ;
+out ;
+make G := ? : Set ;
+solve G M.d ;
+show state ;
