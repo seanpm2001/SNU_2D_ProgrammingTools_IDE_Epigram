@@ -1,0 +1,1119 @@
+\section{A Universe of Inductive Families}
+\label{sec:indexing-desc}
+
+\newcommand{\vtup}[2]{\bigRedBracket{\begin{array}{@{}#1@{}}#2\end{array}}}
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Motivation
+    <- Desc: expressivity of simply-typed datatypes: inductive types
+        <- Values do not influence types
+    /> Example: Vectors
+        <- Cannot be defined by just induction
+            <- Vectors of all size need to be defined at the *same* time
+            -> Defined as a *family* of types
+                -> Index
+        -> I -> IDesc I: Inductive family
+    ???
+\end{wstructure}
+
+So far, we have explored the realm of inductive types, building on
+intuition from ML-like datatypes, using type dependency as a
+descriptive tool in $\Desc$ and its interpretation. Let us now make
+dependent types the object as well as the means of our study.
+
+Dependent datatypes provide a way to work at higher level of
+precision \emph{a priori}, reducing the sources of failure we
+might otherwise need to manage. For the perennial
+example, consider \emph{vectors}---lists indexed by length. By
+making length explicit in the type, we can prevent hazardous
+operations (the type of `head' demands vectors of length
+$\NatSuc{\V{n}}$) and offer stronger guarantees (pointwise
+addition of $\V{n}$-vectors yields an $\V{n}$-vector).
+
+However, these datatypes are not \emph{individually} inductive. For
+instance, we have to define the whole \emph{family} of vectors
+mutually, in one go. In dependently typed languages, the basic grammar
+of datatypes is that of inductive families. To capture this grammar,
+we must account for \emph{indexing}.
+
+%% \subsection{Desc, atomically}
+%% \label{sec:idesc-atomic-desc}
+
+%% \begin{wstructure}
+%% [Outdated: type former presentation instead]
+%% <- Adding hindx have introduced some duplication
+%%     <- indx == hindx 1
+%%     -> We can factor out commonalities 
+%%         /> Obtain an equivalent presentation
+%%         /> Still embeddable (refer to the Agda model)
+%% \end{wstructure}
+
+%% \begin{wstructure}
+%% <- Also replacing '1 by 'const  [figure]
+%%     <- For convenience
+%%         <- 'const X equivalent to 'sigma X (\_ -> '1)
+%%         /> Easier to abstract
+%%             <- Extensionally same
+%%             /> 'const more useful in practice
+%% \end{wstructure}
+
+%% Before moving on to indexed descriptions, we have to carry out some
+%% maintenance work on descriptions. We presented $\Desc$ as the grammar
+%% of inductive types. Hence, the codes closely follow this grammar. In
+%% the following, we adopt an alternative presentation. With
+%% $\DSigma{\!}{\!}$, we are actually \emph{quoting} a standard
+%% type-former, namely
+
+%% $$\Bhab{\Sigma}{\PI{\V{S}}{\Set} \PI{\V{S}}{\Set} \Set}$$
+
+%% In the alternative presentation, we go further and present all our
+%% codes as quotations of standard type-formers. This presentation is
+%% shown in Figure~\ref{fig:type-former-desc}. The reader will notice
+%% that we replace $\DUnit$ by a more general $\DConst{\!}$ code. Whereas
+%% $\DUnit$ was interpreted as the unit set, $\DConst{\V{X}}$ is
+%% interpreted as $\V{X}$, for any $\Bhab{\V{X}}{\Set}$. Extensionally,
+%% $\DConst{\V{X}}$ and $\DSigma{\V{X}}{\DUnit}$ are equivalent. However,
+%% $\DConst{\!}$ is more succinct. More importantly, $\DConst$ is
+%% \emph{first-order}, unlike its equivalent encoding. From a
+%% definitional perspective, we are giving more opportunities to the
+%% type-system, hence reducing the burden on the programmer. For the same
+%% reason, we introduce $\DProd{\!}{\!}$ that overlaps with
+%% $\DSigma{\!}{\!}$.
+
+%% This reorganisation is strictly equivalent to the previous one
+%% (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
+%% self-descriptive. We refer the reader to the companion technical
+%% report for details. In this finer-grained presentation, we can define
+%% $\DIndx{\!}$ and $\DHindx{\!}{\!}$ as follow:
+
+%% \[\begin{array}{l@{\:\mapsto\:\:}l}
+%% \DIndx{\V{D}}         & \DProd{\DId}{\V{D}}                      \\
+%% \DHindx{\V{H}}{\V{D}}     & \DProd{(\DPi{\V{H}}{(\LAM{\_} \DId)})}{\V{D}}
+%% \end{array}
+%% \]
+
+%% Consequently, the examples previously developed can be
+%% straightforwardly translated into this new presentation. For example,
+%% here is the new definition of $\NatD$:
+
+%% \[\stk{
+%% \NatD : \Desc \\
+%% \NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
+%%                      {[ \DUnit \quad \DId ]}
+%% }\]
+
+
+%% In the following, we adopt this last version as our de
+%% facto universe of inductive types. In particular, we are going to
+%% evolve this presentation into an indexed one.
+
+%% \note{Shall we talk about the Type Theory being Desc Zero? or such story?}
+
+%% \begin{figure}
+
+%% \[\stk{
+%% \begin{array}{ll}
+%% \stk{
+%% \data \Desc : \Set \where                                      \\
+%% \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+%%     \DId            & \Desc                                    \\
+%%     \DConst{\!}     & \Set \To \Desc                           \\
+%%     \DProd{\!}{\!}  & \PI{\V{D}, \V{D'}}{\Desc} \Desc          \\
+%%     \DSigma{\!}{\!} & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
+%%     \DPi{\!}{\!}    & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc 
+%% \end{array}
+%% }
+%% \vspace{0.2in}
+%% \\
+%% \stk{
+%% \descop{\_\:}{} : \Desc \To \Set \To \Set \\
+%% \begin{array}{@{}l@{\:=\:\:}ll}
+%% \descop{\DId}{\V{X}}          &  \V{X}                                           \\
+%% \descop{\DConst{\V{Z}}}{\V{X}}    &  \V{Z}                                           \\
+%% \descop{\DProd{\V{D}}{\V{D'}}}{\V{X}} &  \TIMES{\descop{\V{D}}{\V{X}}}{\descop{\V{D}\V{'}}{\V{X}}}       \\
+%% \descop{\DSigma{\V{S}}{\V{D}}}{\V{X}} &  \SIGMA{\V{s}}{\V{S}} \descop{\V{D}\: \V{s}}{\V{X}}          \\
+%% \descop{\DPi{\V{S}}{\V{D}}}{\V{X}}    &  \PI{\V{s}}{\V{S}} \descop{\V{D}\: \V{s}}{\V{X}}            
+%% \end{array}
+%% }
+%% \end{array}
+%% }\]
+
+%% \caption{Universe of descriptions based on Type-formers}
+%% \label{fig:type-former-desc}
+
+%% \end{figure}
+
+\subsection{The universe of indexed descriptions}
+
+\begin{wstructure}
+<- Labelling Id
+    <- We had: data Desc : Set -> Set
+    -> We want: data IDesc : (I -> Set) -> Set
+        <- Indexed functor (?)
+        -> It is sufficient to label Id
+            <- Where the functor is built
+\end{wstructure}
+
+
+\newcommand{\DotTo}{\mathop{\blue{\dot{\rightarrow}}}}
+
+We presented the $\Desc$ universe as a
+grammar of strictly positive endofunctors on $\Set$ and developed
+inductive types by taking a fixpoint. To describe inductive families
+indexed by some $\Bhab{\V{I}}{\Set}$, we play a similar game with
+endofunctors on the category $\Set^{\V{I}}$,
+families of sets \(\V{X},\V{Y}:\V{I}\To\Set\) for objects, and for morphisms,
+families of functions in \(\V{X}\DotTo\V{Y}\), defined pointwise:
+\[
+\V{X}\DotTo\V{Y} \mapsto \PI{\V{i}}{\V{I}}\V{X}\:\V{i}\To\V{Y}\:\V{i}
+\]
+
+An \emph{indexed functor} in $\Set^{\V{I}}\To\Set^{\V{J}}$ has the
+flavour of a device driver, characterising `responses' to a given
+request in \(\V{J}\) where we may in turn make `subrequests' at indices
+chosen from \(\V{I}\). When we use indexed functors to define inductive
+families of datatypes,
+\(\V{I}\) and \(\V{J}\) coincide: we explain how to make a node fit a given
+index, including subnodes at chosen indices. E.g., if we are asked for a
+vector of length 3, we choose to ask in turn for a tail of length 2.
+
+To code up valid notions of response to a given request, we introduce
+$\SYMBIDesc$ and its interpretation:
+%
+\[\stk{
+\IDesc{(\Bhab{\V{I}}{\Set})} : \Set \smallskip \\
+\idescop{\_}{}{} : _{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{I} \To \Set) \To \Set    \\
+}\]
+
+An \(\IDesc{\V{I}}\) specifies just \emph{one} response, but a
+request-to-response \emph{function},
+$\V{R}:\V{I} \To \IDesc{\V{I}}$, yields a strictly positive endofunctor
+\[
+  \LAM{\V{X}} \LAM{\V{i}} \idescop{\V{R}\:\V{i}}{\V{I}}{\V{X}} :
+  \Set^{\V{I}} \To \Set^{\V{I}}
+\]
+whose fixpoint we then take:
+%
+\[\stkl{
+\Rule{\Gamma \vdash \Bhab{\V{I}}{\Set} \qquad
+      \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}}}
+     {\Gamma \vdash \Bhab{\SYMBIMu_{\V{I}}{\V{R}}}{\V{I}\To\Set}} \qquad
+\\
+\Rule{\begin{array}{l@{\qquad}l}
+          \Gamma \vdash \Bhab{\V{I}}{\Set} &
+          \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}} \\
+          \Gamma \vdash \Bhab{\V{i}}{\V{I}} &
+          \Gamma \vdash \Bhab{\V{x}}{\idescop{\V{R}\:\V{i}}{\V{I}}{(\SYMBIMu_{\V{I}}{\V{R}})}}
+      \end{array}}
+     {\Gamma \vdash \Bhab{\Con{\V{x}}}{\IMu{\V{I}}{\V{R}}{\V{i}}}}
+}\]
+
+\newcommand{\upgrade}{\F{upgrade}}
+\newcommand{\inductionI}{\F{indI}}
+\newcommand{\cataI}{\F{cataI}}
+
+We define the $\SYMBIDesc$ grammar in Figure~\ref{fig:idesc},
+delivering only \emph{strictly positive} families. As well as
+indexing our descriptions, we have refactored a little, adopting
+a more compositional algebra of codes, where $\Desc$ is
+biased towards the right-nested tuples. We now have
+\(\DVar{i}\) for recursive `subrequests' at a chosen index \(i\),
+with tupling by right-associative
+\(\DProd{}{}\) and higher-order branching
+by \(\DPi{\!}{\!}\).  Upgrade your old $\Desc$
+to a trivially indexed $\IDesc{\Unit}$ as follows!
+\[\begin{array}{@{}ll}
+\upgrade :\Desc & \To\IDesc{\Unit} \\
+\upgrade\:\DUnit & \mapsto \DConst{\Unit} \\
+\upgrade\:(\DSigma{\V{S}}{\V{D}}) &
+   \mapsto \DSigma{\V{S}}{\LAM{\V{s}}\upgrade\:(\V{D}\:\V{s})} \\
+\upgrade\:(\DIndx{\V{D}}) & \mapsto
+  \DProd{\DVar{\Void}}{\upgrade\:\V{D}} \\
+\upgrade\:(\DHindx{\V{H}}{\V{D}}) & \mapsto
+  \DProd{(\DPi{\V{H}}{\LAM{\_}\DVar{\Void}})}{\upgrade\:\V{D}} \\
+\end{array}\]
+
+To deliver induction for indexed datatypes, we need the `holds everywhere'
+machinery. We present $\SYMBAllI$ and $\SYMBallI$ in
+Figure~\ref{fig:allI-predicates}, with a twist---where
+$\Desc$ admits the $\SYMBall$ construction, $\SYMBIDesc$ is \emph{closed}
+under it! The $\SYMBAllI$
+operator for a description indexed on \(\V{I}\) is strictly positive in
+turn, and has a description indexed on
+ some \(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}\).
+Induction on indexed descriptions is then hardwired thus:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\inductionI : & _{\PI{\V{I}}{\Set}}
+                   \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}}
+                   \PI{\V{P}}{(\SIGMA{\V{i}}{\V{I}}{\IMu{\V{I}}{\V{R}}{\V{i}}}) \To \Set} \\
+                 & (      \PITEL{\V{i}}{\V{I}} 
+                          \PI{\V{xs}}{\idescop{\V{R}\: \V{i}}{\V{I}}{(\SYMBIMu_{\V{I}}{\V{R}})}} \\
+                 & \   \idescop{\AllI{}
+                                     {(\V{R}\: \V{i})}
+                                     {(\SYMBIMu_{\V{I}}{\V{R}})}
+                                     {\V{xs}}}
+                               {}
+                               {\V{P}} \To
+                       \V{P}\: \pair{\V{i}}{\Con{\V{xs}}}{}) \To \\
+                 & \PITEL{\V{i}}{\V{I}}
+                   \PI{\V{x}}{\IMu{\V{I}}{\V{R}}{\V{i}}}
+                   \V{P}\: \pair{\V{i}}{\V{x}}{}
+\end{array} \\
+\inductionI\: \V{R}\: \V{P}\: \V{m}\: \V{i}\: (\Con{\V{xs}}) \mapsto 
+    \V{m}\: \V{i}\: \V{xs}\: (\allI{}
+                                    {\V{R}\: \V{i}}
+                                    {(\SYMBIMu_{\V{I}}{\V{R}})}
+                                    {\V{P}}
+                                    {(\spl{\LAM{\V{i}}\LAM{\V{xs}} \inductionI\: \V{R}\: \V{P}\: \V{m}})}
+                                    {\V{xs}})
+}\]
+%
+The generic catamorphism, $\cataI$, is constructed from $\inductionI$
+as before. Its type becomes more elaborated, to deal with the
+indexing:
+%
+\[
+\begin{array}{@{}l@{}l}
+\cataI :& \PITEL{\V{I}}{\Set}
+          \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}} \\
+        & \PI{\V{T}}{\V{I} \To \Set}
+          (\PI{\V{i}}{\V{I}}{\idescop{\V{R}\: \V{i}}{}{\V{T}} \To \V{T}\: \V{i}}) \To
+          \SYMBIMu_{\V{I}}{\V{R}} \DotTo \V{T}
+\end{array}
+\]
+
+
+\begin{figure*}
+
+\[
+\begin{array}{ll}
+%%
+\stk{
+\begin{array}{@{}ll}
+\SYMBAllI : & _{\PI{\V{I}}{\Set}}
+              \PITEL{\V{D}}{\IDesc{\V{I}}}
+              \PI{\V{X}}{\V{I} \To \Set} \\
+            & \idescop{\V{D}}{\V{I}}{\V{X}} \To
+              \IDesc{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}})}
+\end{array} \\
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
+\AllI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{x}} &
+    \DVar{\pair{\V{i}}{\V{x}}{}} \\
+\AllI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{k}} &
+    \DConst{\Unit} \\
+\AllI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\pair{\V{d}}{\V{d'}}{}} &
+    \DProd{\AllI{}{\V{D}}{\V{X}}{\V{d}}}{\AllI{}{\V{D'}}{\V{X}}{\V{d'}}} \\
+\AllI{\:}{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\pair{\V{s}}{\V{d}}{}} &
+    \AllI{}{(\V{D}\: \V{s})}{\V{X}}{\V{d}} \\
+\AllI{\:}{(\DPi{\V{S}}{\V{D}})}{& \V{X}}{\V{f}} &
+    \DPi{\V{S}}{\LAM{\V{s}} \AllI{}{(\V{D}\: \V{s})}{\V{X}}{(\V{f}\: \V{s})}}
+\end{array}
+}
+&
+%%
+\stk{
+\begin{array}{@{}ll}
+\SYMBallI : & _{\PI{\V{I}}{\Set}}
+              \PITEL{\V{D}}{\IDesc{\V{I}}}
+              \PITEL{\V{X}}{\V{I} \To \Set} 
+              \PI{\V{P}}{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}) \To \Set} \\
+            & (\PI{\V{x}}{\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}} \V{P}\: \V{x}) \To
+              \PI{\V{xs}}{\idescop{\V{D}}{\V{I}}{\V{X}}} 
+              \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{}{\V{P}}
+\end{array} \\
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
+\allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{P}}{\V{p}}{\V{x}} &
+    \V{p}\: \pair{\V{i}}{\V{x}}{} \\
+\allI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{P}}{\V{p}}{\V{k}} &
+    \void \\
+\allI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{d}}{\V{d'}}{}} &
+    \pair{\allI{}{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}
+         {\allI{}{\V{D'}}{\V{X}}{\V{P}}{\V{p}}{\V{d'}}}{} \\
+\allI{\:}{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{s}}{\V{d}}{}} &
+    \allI{}{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{p}}{\V{d}} \\
+\allI{\:}{(\DPi{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\V{f}} &
+    \LAM{\V{a}}\allI{}{(\V{D}\: \V{a})}{\V{X}}{\V{P}}{\V{p}}{(\V{f}\: \V{a})}
+\end{array}
+\end{array}
+}
+\]
+
+\caption{Indexed induction predicates}
+\label{fig:allI-predicates}
+
+\end{figure*}
+
+
+\begin{figure}
+
+\[\stk{\begin{array}{@{}ll}
+\IDesc{(\Bhab{\V{I}}{\Set})} &: \Set \\
+\DVar{(\Bhab{\V{i}}{\V{I}})} &: \IDesc{\V{I}} \\
+\DConst{(\Bhab{\V{A}}{\Set})} &:\IDesc{\V{I}}       \\
+\DProd{(\Bhab{\V{D}}{\IDesc{\V{I}}})}{(\Bhab{\V{D}}{\IDesc{\V{I}}})}
+  & :\IDesc{\V{I}}       \\
+\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S}\To\IDesc{\V{I}}})}
+& : \IDesc{\V{I}}  \\
+\DPi{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S}\To\IDesc{\V{I}}})}
+& : \IDesc{\V{I}}  \\
+\end{array}\smallskip \\
+\idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{\V{I}} \To \Set) \To \Set                  \\
+\begin{array}{@{}l@{\V{X}}@{\:\mapsto\:\:}ll}
+\idescop{\DVar{\V{i}}}{\V{I}}{&}      &  \V{X}\: \V{i}                                           \\
+\idescop{\DConst{\V{K}}}{\V{I}}{&}    &  \V{K}                                                   \\
+\idescop{\DProd{\V{D}}{\V{D'}}}{\V{I}}{&} &  \TIMES{\idescop{\V{D}}{\V{I}}{\V{X}}}{\idescop{\V{D'}}{\V{I}}{\V{X}}}       \\
+\idescop{\DSigma{\V{S}}{\V{D}}}{\V{I}}{&} &  \SIGMA{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}                    \\
+\idescop{\DPi{\V{S}}{\V{D}}}{\V{I}}{&}    &  \PI{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}            
+\end{array}
+}
+\]
+
+\caption{Universe of indexed descriptions}
+\label{fig:idesc}
+
+\end{figure}
+
+
+
+\subsection{Examples}
+\label{sec:idesc-examples}
+
+\paragraph{Natural numbers:}
+
+\begin{wstructure}
+<- Nat
+    -> [equation]
+    <- Non-indexed types lives in IDesc 1
+        -> This applies to all previous examples
+\end{wstructure}
+
+For basic reassurance, we \(\upgrade\:\NatD\):
+%
+\[\stk{
+\upgrade\:\NatD : \IDesc{\Unit} \\
+\upgrade\:\NatD \mapsto \DSigma{(\EnumT{\sqr{\NatZero\: \SYMBNatSuc}})}
+                     {\sqr{(\DConst{\Unit}) \; 
+                           (\DProd{\DVar{\Void}}{\DConst{\Unit}})}}
+}\]
+%
+Note that trailing \(\Unit\)'s keep our right-nested, \(\void\)-terminated
+tuple structure, and with it our elaboration machinery.
+We can similarly \(\upgrade\) any inductive type.
+Moreover, \(\IDesc{I}\) can now code a bunch of mutually
+inductive types, if \(I\) enumerates the
+bunch~\cite{paulin:habilitation, yakushev:mutual-def}.
+
+
+
+\paragraph{Indexed descriptions:}
+
+\begin{wstructure}
+<- Levitation [figure]
+    <- Following Desc encoding
+        /> Note: simple datatype
+            -> Live in IDesc 1
+    -> Behind the scene, relies on the special purpose switchD
+\end{wstructure}
+
+Note that $\IDesc{\V{I}}$ is a plain inductive type, parametrised
+by \(\V{I}\), but indexed trivially.
+%
+\[\stk{
+\IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
+\IDescD\: \V{I} \mapsto \SYMBDSigma \\
+\quad
+ \EnumT\vtup{r}{\SYMBDVar\\
+                \SYMBDConst\\
+                \DProd{}{}\\
+                \SYMBDSigma\\
+                \SYMBDPi}
+         \; \vtup{l@{}l}{
+  (\DProd{\DConst{\V{I}} &}{\DConst{\Unit}})                  \\
+  (\DProd{\DConst{\Set}  &}{\DConst{\Unit}})                  \\
+  (\DProd{\DVar{\Void}}{\DProd{\DVar{\Void}&}{\DConst{\Unit}}})  \\
+  (\DSigma{\Set}{\LAM{\V{S}}
+     \DProd{( \DPi{\V{S}}{\LAM{\_} \DVar{\Void}}) &}{\DConst{\Unit}}})     \\
+  (\DSigma{\Set}{\LAM{\V{S}}
+     \DProd{( \DPi{\V{S}}{\LAM{\_} \DVar{\Void}}) &}{\DConst{\Unit}}})     \\
+                                   }
+}\]
+
+Therefore, this universe is self-describing and can be
+levitated. As before, we rely on a special purpose $\F{switchID}$
+operator to build the finite function $\bigRedBracket{\ldots}$
+without mentioning \(\SYMBIDesc\).
+
+\paragraph{Vectors:}
+
+\newcommand{\VecD}{\F{VecD}}
+\newcommand{\VecNil}{\etag{\CN{vnil}}}
+\newcommand{\SYMBVecCons}{\etag{\CN{vcons}}\xspace}
+\newcommand{\VecCons}[2]{\SYMBVecCons\:#1\:#2}
+
+So far, our examples live in $\IDesc{\Unit}$, with no interesting
+indexing. Let us at least have vectors. Recall
+that the constructors $\VecNil$ and $\SYMBVecCons$ are defined only for
+$\NatZero$ and $\NatSuc$ respectively:
+%
+\[
+\stk{
+\data \D{Vec}\: \PITEL{\V{X}}{\Set} : \PI{\V{i}}{\Nat} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \VecNil          & \D{Vec}\:\V{X}\:{\NatZero}   \\
+    \SYMBVecCons & _{\PI{\V{n}}{\Nat}}\V{X} \To \D{Vec}\:{\V{X}}\:{\V{n}} \To \D{Vec}\:{\V{X}}\:{(\NatSuc{\V{n}})}
+\end{array}
+}
+\]
+
+One way to code constrained datatypes is to appeal to a suitable
+notion of propositional equality \(\PropEq\) on indices. The
+constraints are expressed as `Henry Ford' equations in the datatype.
+For vectors:
+%
+\[\stk{
+\VecD : \Set \To \Nat \To \IDesc{\Nat} \\
+\VecD\: \V{X}\: \V{i} \mapsto \SYMBDSigma\\
+\quad
+\EnumT{\vtup{r}{\VecNil\\ \SYMBVecCons}}
+\; \vtup{r}{
+                            (\DConst{(\NatZero\PropEq\V{i})}) \\
+ ( \DSigma{\Nat}{\LAM{\V{n}}
+   \DProd{\DConst{\V{X}}}
+     {\DProd{\DVar{\V{n}}}{\DConst{(\NatSuc{\V{n}}\PropEq\V{i})}})}}
+                          }
+}\]
+
+You may choose $\VecNil$ for any index you like as long as it is
+$\NatZero$; in the $\SYMBVecCons$ case, the length of the tail is
+given explicitly, and the index $\V{i}$ must be one more. Our previous
+\(\Unit\)-terminated tuple types can now be seen as the trivial case
+of constraint-terminated tuple types, with elaboration supplying the
+witnesses when trivial.
+
+In this paper, we remain anxiously agnostic about
+propositional equality. Any will do, according to
+conviction; many variations are popular. The
+homogeneous identity type used in Coq is ill-suited to
+dependent types, but its heterogeneous variant (forming equations
+regardless of type) allows the translation of pattern
+matching with structural recursion to
+\(\F{indI}\)~\cite{goguen:pattern-matching}. The
+extensional equality of \citet{altenkirch:ott} also sustains the translation.
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Brady optimisation: forcing
+    <- Source to source translation
+    <- Able to remove some constraints
+    -> Example: Fin [figure]
+    ??? More technical detail needed
+\end{wstructure}
+
+However, sometimes, the equations are redundant. 
+Looking back at $\D{Vec}$, we find that the equations constrain
+the choice of constructor and stored tail index retrospectively.
+But \emph{inductive families need not store their
+  indices}~\cite{brady:index-inductive-families}!  If we
+analyse the incoming index, we can tidy our description of $\D{Vec}$
+as follows:
+%
+\[\stk{
+\VecD \:\PITEL{\V{X}}{\Set} : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}lll}
+\VecD\:\V{X}\: \NatZero     & \mapsto & \DConst{\Unit} \\
+\VecD\:\V{X}\: (\NatSuc{\V{n}}) & \mapsto &
+ \DProd{\DConst{\V{X}}}{\DVar{\V{n}}}
+\end{array}
+                                       
+}\]
+%
+The constructors and equations have simply disappeared. A similar
+example is $\SYMBFin$ (bounded numbers), specified by:
+%
+\[
+\stk{
+\data \SYMBFin : \PI{\V{n}}{\Nat} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \FinZero      & _{\PI{\V{n}}{\Nat}}\Fin{(\NatSuc{\V{n}})}   \\
+    \SYMBFinSuc   & _{\PI{\V{n}}{\Nat}}\Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
+\end{array}
+}\]
+%
+In this case, we can eliminate equations but not constructors, since both
+$\FinZero$ and $\SYMBFinSuc$ both target $\SYMBNatSuc$:
+%
+\[\stk{
+\FinD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}lll}
+\FinD\: \NatZero         & \mapsto & \DSigma{\EnumT{\Void}}{\Void} \\
+\FinD\: (\NatSuc{\V{n}}) & \mapsto & \DSigma{\EnumT{\sqr{\FinZero\: \SYMBFinSuc}}}
+                                            {\sqr{(\DConst{\Unit})\: (\DVar{\V{n}})}}
+\end{array}
+}\]
+
+This technique of extracting information by case analysis on indices
+applies to descriptions exactly where Brady's `forcing' and
+`detagging' optimisations apply in compilation. They eliminate just
+those constructors, indices and constraints which are redundant even
+in \emph{open} computation. In \emph{closed} computation, where proofs
+can be trusted, all constraints are dropped.
+
+
+\paragraph{Tagged indexed descriptions:}
+
+\newcommand{\SYMBmuide}{\D{\({\mu}^{\!+}\)}\xspace}
+\newcommand{\muide}[2]{\SYMBmuide\!\!_{#1}\:#2}
+
+Let us reflect this index analysis technique.
+We can divide a description of tagged indexed data in two: first, the
+constructors that do not depend on the index; then, the constructors
+that do. The non-dependent part mirrors the definition for non-indexed
+descriptions. The index-dependent part simply indexes the choice of
+constructors by $\V{I}$. Hence, by inspecting the index, it is
+possible to vary the `menu' of constructors.
+%
+\[
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+ \TagIDesc{\V{I}}  & \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
+ \ATagIDesc{\V{I}} & \SIGMA{\V{E}}{\EnumU} \PI{\V{i}}{\V{I}} \spi{\V{E}}{\LAM{\_} \IDesc{\V{I}}} \\
+ \ITagIDesc{\V{I}} & 
+     \SIGMA{\V{F}}{\V{I} \To \EnumU} \PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{\LAM{\_} \IDesc{\V{I}}} 
+\end{array}
+\]
+
+\begin{wstructure}
+<- Vectors
+    Do we treat them in the end? 
+    What can we say here we haven't with Fin?
+\end{wstructure}
+
+In the case of a tagged $\D{Vec}$, for instance, for the index
+$\NatZero$, we would only propose the constructor
+$\ListNil$. Similarly, for $\NatSuc{n}$, we would only propose the
+constructor $\SYMBListCons$.
+
+We write $\toIDesc{\V{D}}\:\V{i}$ to denote the $\IDesc{\V{I}}$
+computed from the tagged indexed description $\V{D}$ at index
+$\V{i}$. Its expansion is similar to the definition of \(\SYMBtoDesc\)
+for tagged descriptions, except that it must also append the two parts.
+We again write $\muide{\V{I}}{\V{D}}$ for
+$\IMu{\V{I}}{(\toIDesc{\V{D}})}$.
+
+\paragraph{Typed expressions:}
+
+\begin{wstructure}
+<- Hutton's razor
+    <- Types
+        <- 'Nat
+        <- 'Bool
+    <- Term [figure]
+        <- val : Val 'a -> 'a  for Val : Ty -> Set, mapping to Nat and Bool
+        <- cond : 'Bool -> a -> a -> a
+        <- plus : 'Nat -> 'Nat -> 'Nat
+        <- le : 'Nat -> 'Nat -> 'Bool
+\end{wstructure}
+
+%% Types
+\newcommand{\Ty}{\D{Ty}}
+\newcommand{\Ebool}{\etag{\CN{bool}}}
+\newcommand{\Enat}{\etag{\CN{nat}}}
+
+%% Constructors
+\newcommand{\SYMBEval}{\etag{\CN{val}}\xspace}
+\newcommand{\SYMBEvar}{\etag{\CN{var}}\xspace}
+\newcommand{\Eval}[1]{\SYMBEval\:#1}
+\newcommand{\SYMBEcond}{\etag{\CN{cond}}\xspace}
+\newcommand{\Econd}[3]{\SYMBEcond\:#1\:#2\:#3}
+\newcommand{\SYMBEplus}{\etag{\CN{plus}}\xspace}
+\newcommand{\Eplus}[2]{\SYMBEplus\:#1\:#2}
+\newcommand{\SYMBEle}{\etag{\CN{le}}\xspace}
+\newcommand{\Ele}[2]{\SYMBEle\:#1\:#2}
+
+%% Index mapper (terminology?)
+\newcommand{\SYMBVal}{\F{Val}\xspace}
+\newcommand{\Val}[1]{\SYMBVal\:#1}
+\newcommand{\SYMBVar}{\F{Var}\xspace}
+\newcommand{\Var}[2]{\SYMBVar\: #1\: #2}
+
+%% Hutton expressions
+\newcommand{\HExprD}{\F{ExprD}}
+\newcommand{\HExprAD}{\F{ExprAD}}
+\newcommand{\HExprID}{\F{ExprID}}
+\newcommand{\HExprVarD}[1]{\C{ExprD}_{\F{Var},#1}}
+\newcommand{\HExprFreeD}{\C{ExprD}^{\C{Free}}}
+\newcommand{\HExprAFreeD}{\C{ExprAD}^{\C{Free}}}
+
+We are going to define a syntax for a small language with
+two types, natural numbers and booleans:
+%
+\[
+\Ty \mapsto \EnumT{\sqr{\Enat\: \Ebool}}
+\]
+
+\newcommand{\plusHost}{\mathop{\green{+_{\mathrm{H}}}}}
+\newcommand{\leHost}{\mathop{\green{\leq_{\mathrm{H}}}}}
+
+
+This language has values, conditional expression, addition and
+comparison. Informally, their types are:
+%
+\[
+\begin{array}{l@{\::\:\:}l}
+\SYMBEval            & \Val{\V{ty}} \To \V{ty} \\
+\SYMBEcond           & \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
+\end{array}
+\qquad
+\begin{array}{l@{\::\:\:}l}
+\SYMBEplus           & \Enat \To \Enat \To \Enat                           \\
+\SYMBEle             & \Enat \To \Enat \To \Ebool                          \\
+\end{array}
+\]
+%
+The function $\SYMBVal$ interprets object language types in the
+host language, so that arguments to $\SYMBEval$ fit their
+expected type.
+%
+\[\stk{
+\SYMBVal : \Ty \To \Set \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\Val{\Enat}   & \Nat \\
+\Val{\Ebool}  & \Bool
+\end{array}
+}\]
+%
+We take $\Nat$ and $\Bool$ to represent natural numbers and Booleans
+in the host language, equipped with addition $\plusHost$ and
+comparison $\leHost$.
+
+We express our syntax as a tagged indexed description, indexing over
+object language types $\Ty$. We note that some constructors are always
+available, namely $\SYMBEval$ and $\SYMBEcond$. On the other hand,
+$\SYMBEplus$ and $\SYMBEle$ constructors are index-dependent, with
+$\SYMBEplus$ available just when building a $\Enat$, $\SYMBEle$ just
+for $\Ebool$. The code, below, reflects this intuition, with the first
+component uniformly offering $\SYMBEval$ and $\SYMBEcond$, the second
+selectively offering $\SYMBEplus$ or $\SYMBEle$.
+%
+%%% \begin{figure}
+%
+\[\stk{
+\stk{
+\HExprD : \TagIDesc{\Ty} \\
+\HExprD \mapsto \sqr{ \HExprAD , \HExprID } \\
+} \smallskip\\
+\stk{
+\HExprAD : \ATagIDesc{\Ty} \\
+\HExprAD \mapsto \vtup{l}{
+   {\vtup{r}{\SYMBEval\\ \SYMBEcond \,}} \red{,} \;
+      \LAM{\V{ty}}
+      \vtup{l@{\:}l}{
+      \DProd{\DConst{(\Val{\V{ty}})}&}{\DConst{\Unit}} \\
+      \DProd{\DProd{\DVar{\Ebool}}{\DProd{\DVar{\V{ty}}}{\DVar{\V{ty}}}}&}
+        {\DConst{\Unit}} \\
+     }
+   }
+\smallskip\\
+} 
+\\
+\stk{
+\HExprID : \ITagIDesc{\Ty} \\
+\HExprID \mapsto \vtup{l}{
+                   \vtup{r}{\sqr{\SYMBEplus} \\ \sqr{\SYMBEle}} \red{,} \;
+  \LAM{\_} \sqr{\DProd{\DProd{\DVar{\Enat}}{\DVar{\Enat}}}{\DConst{\Unit}}}
+                   }
+}
+}\]
+
+%%%\caption{Syntax of typed expressions}
+%%%\label{fig:hexpr-full}
+
+%%%\end{figure}
+
+\newcommand{\evalH}{\F{eval}_{\green{\Downarrow}}}
+\newcommand{\evalOne}{\F{eval}_{\green{\downarrow}}}
+
+Given the syntax, let us supply the semantics. We implement an
+evaluator as a catamorphism:
+%
+\[\stk{
+\evalH : \PI{\V{ty}}{\Ty} 
+         \muide{\Ty}{\HExprD}\: \V{ty} \To
+         \Val{\V{ty}} \\
+\evalH\: \V{ty}\: \V{term} \mapsto \cataI_{\Ty} \:
+                                 (\toIDesc{\HExprD})\: 
+                                 \SYMBVal\: 
+                                 \evalOne\: 
+                                 \V{ty}\: 
+                                 \V{term}
+}\]
+%
+To finish the job, we must supply the algebra which implements a single
+step of evaluation, given subexpressions evaluated already.
+%
+\[\stk{
+\evalOne : \PI{\V{ty}}{\Ty}
+ \idescop{(\toIDesc{\HExprD})\:\V{ty}}{\Ty}{\SYMBVal}
+           \To {\Val{\V{ty}}} \\
+\begin{array}{@{}l@{}c@{}l@{\:\mapsto\:\:}l}
+\evalOne\: & \_\: & (\SYMBEval\;\V{x})                                            & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolTrue\:\V{x}\:\_)   & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolFalse\:\_\:\V{y})  & \V{y} \\
+\evalOne\: & \Enat\: & (\SYMBEplus\:\V{x}\:\V{y})   & \V{x} \plusHost \V{y} \\
+\evalOne\: & \Ebool\: & (\SYMBEle\:\V{x}\:\V{y})  & \V{x} \leHost \V{y} 
+\end{array}
+}\]
+
+\begin{wstructure}
+    /> Closed term
+        <- only constants and operations on them
+        -> Extend Val with Var : Ty -> Set, mapping to EnumU
+            -> Open term
+            -> Language of well-typed terms
+                <- By construction
+\end{wstructure}
+
+Hence, we have a type-safe syntax and a tagless interpreter for our
+language, in the spirit
+of~\citet{augustsson.carlsson:dependent.interpreter}, with help from
+the generic catamorphism. However, so far, we are only able to define
+and manipulate \emph{closed} terms. Adding variables, it is possible
+to build and manipulate \emph{open} terms, that is, terms in a
+context. We shall get this representation, for free, thanks to the
+\emph{free indexed monad} construction.
+
+
+\subsection{Free indexed monad}
+
+\begin{wstructure}
+<- Variation on a theme: free imonad construction
+    <- Recall existence of generic free monad construction
+    -> Present its generalisation to IDesc [equation]
+        <- \I -> IDesc I as describing an indexed endofunctor
+        <- Free monad construction
+    -> Still a suitable, generic notion of substitution
+        <- show type signature
+        <- show implementation?? (space! space!)
+\end{wstructure}
+
+In Section~\ref{sec:desc-free-monad}, we have built a free monad
+operation for simple descriptions. The process is similar in the
+indexed world. Namely, given an indexed functor, we derive the indexed
+functor coding its free monad: \note{pwm: Whoa there. Maybe we should
+  say something about IMonads in general before we get to this point?}
+%
+\[\stk{
+\begin{array}{ll}
+\FreeIMonad{\_}{} : & _{\PI{\V{I}}{\Set}}
+                     \PITEL{\V{R}}{\TagIDesc{\V{I}}} 
+                     \PITEL{\V{X}}{\V{I} \To \Set}\To 
+                      \TagIDesc{\V{I}}
+\end{array} \\
+\FreeIMonad{\pair{\V{E}}{\V{F}}{}}{\V{I}}{\V{R}} \mapsto
+    \pair{\pair{\ListCons{\SYMBDVar}{(\fst{\V{E}})}} 
+               {\LAM{\V{i}}
+                \pair{\DConst{(\V{R}\: \V{i})}}
+                     {(\snd{\V{E}})\: \V{i}}{}}{}}
+         {\V{F}}{}
+}\]
+
+
+\newcommand{\substI}{\F{substI}}
+
+
+Just as in the universe of descriptions, this construction comes with
+an obvious \return and a substitution operation, the \bind. Its
+definition is the following:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\substI : & _{\PI{\V{I}}{\Set}}
+            \PI{\V{X}, \V{Y}}{\V{I} \To \Set}
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
+          & (\V{X} \DotTo 
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}) \To 
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})} \DotTo
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}
+\end{array} \\
+\substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} \mapsto \\
+\qquad    \cataI_{\V{I}}\: (\toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}})\:
+                      (\muide{\V{Y}}{(\FreeIMonad{\V{R}}{}{\V{Y}})})\:
+                      (\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma})\:
+                      \V{i}\:
+                      \V{t} 
+}\]
+% 
+where  $\F{applyI}$ is defined as follows:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\F{applyI} : & _{\PI{\V{I}}{\Set}}
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}}
+            \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
+          & (\V{X} \DotTo \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}) \To \\
+          & \idescop{\toIDesc{\FreeIMonad{\V{R}}
+                                         {\V{I}}
+                                         {\V{X}}}}
+                    {\V{I}}
+                    {\muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}} \DotTo 
+            \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\SYMBDVar}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\V{c}}{\V{ys}}{} & \Con{\pair{\V{c}}{\V{ys}}{}}
+\end{array}
+}\]
+ 
+The subscripted types corresponds to implicit arguments that can be
+automatically inferred, hence do not have to be typed in. Let us now
+consider two examples of free indexed monads.
+
+
+\paragraph{Typed expressions:}
+
+\begin{wstructure}
+    /> Closed term
+        <- only constants and operations on them
+        -> Extend Val with Var : Ty -> Set, mapping to EnumU
+            -> Open term
+            -> Language of well-typed terms
+                <- By construction
+\end{wstructure}
+
+\newcommand{\Ctxt}{\D{Context}}
+\newcommand{\SYMBCtxtEmpty}{\C{[]}\xspace}
+\newcommand{\CtxtEmpty}{\SYMBCtxtEmpty}
+\newcommand{\SYMBCtxtSnoc}{\C{snoc}\xspace}
+\newcommand{\CtxtSnoc}[2]{\SYMBCtxtSnoc\:#1\:#2}
+\newcommand{\SYMBEnv}{\F{Env}}
+\newcommand{\Env}[1]{\SYMBEnv\: #1}
+\newcommand{\SYMBlookup}{\F{lookup}}
+\newcommand{\lookup}[4]{\SYMBlookup\: #1\: #2\: #3\: #4}
+
+In the previous section, we presented a language of closed
+arithmetic expressions. Using the free monad construction, we are
+going to extend this construction to open terms. An open term is
+defined with respect to a context, represented by a snoc-list of
+types:
+%
+\[
+\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+\Ctxt           & \Set \\
+\SYMBCtxtEmpty  & \Ctxt \\
+\SYMBCtxtSnoc   & \Ctxt \To \Ty \To \Ctxt
+\end{array}
+\]
+%
+An environment realises the context, packing a value for each type:
+%
+\[
+\stk{
+\SYMBEnv : \Ctxt \To \Set \\
+\begin{array}{@{}l@{\:\:\mapsto\:\:}l}
+\Env{\CtxtEmpty}                & \Unit \\
+\Env{(\CtxtSnoc{\V{G}}{\V{S}})} & \TIMES{\Env{\V{G}}}{\Val{\V{S}}}
+\end{array}
+}\]
+%
+In this setting, we define type variables, $\SYMBVar$ by:
+%
+\[\stk{
+\Var{}{} : \Ctxt \To \Ty \To \Set \\
+\begin{array}{@{}ll@{\:\:\mapsto\:\:}l}
+\Var{\CtxtEmpty}{& \V{T}}                & 
+    \Void \\
+\Var{(\CtxtSnoc{\V{G}}{\V{S}})}{& \V{T}} & 
+    \SUM{(\Var{\V{G}}{\V{T}})}{(\V{S} \PropEq \V{T})}
+\end{array}
+}\]
+%
+While $\SYMBVal$ maps the type to the corresponding host type,
+$\SYMBVar$ indexes a value in the context, obtaining a proof that the
+types match. The $\SYMBlookup$ function precisely follow this
+semantics:
+%
+\[\stk{
+\SYMBlookup : \PI{\V{G}}{\Ctxt} 
+          \Env{\V{G}} \To 
+          \PI{\V{T}}{\Ty} 
+          \Var{\V{G}}{\V{T}} \To
+          \Val{\V{T}} \\
+\begin{array}{@{}l@{}l@{}l@{}l@{}lll}
+\lookup{& (\CtxtSnoc{\V{G}}{.T})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumRight{\C{refl}})} & \mapsto & \V{t} \\
+\lookup{& (\CtxtSnoc{\V{G}}{\V{S}})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumLeft{\V{x}})} & \mapsto & \lookup{\V{G}}{\V{g}}{\V{T}}{\V{x}} 
+\end{array}
+}\]
+
+\newcommand{\SYMBEmpty}{\F{Empty}\xspace}
+\newcommand{\Empty}[1]{\SYMBEmpty\:#1}
+
+\newcommand{\SYMBopenTerm}{\F{openTm}\xspace}
+\newcommand{\openTerm}[1]{\SYMBopenTerm\: #1}
+\newcommand{\closeTerm}{\F{closeTm}}
+
+\newcommand{\update}{\F{update}}
+
+Consequently, taking the free monad of \(\HExprD\) by \(\SYMBVar\:
+\V{G}\), we obtain the language of open terms in a context \(\V{G}\):
+%
+\[
+\openTerm{\V{G}} \mapsto \FreeIMonad{\HExprD}{\Ty}{(\SYMBVar\:\V{G})}
+\]
+%
+In this setting, the language of closed terms corresponds to the free
+monad assigning an empty set of values to variables
+%
+\[
+\closeTerm \mapsto \FreeIMonad{\HExprD}{\Ty}{\SYMBEmpty}
+\quad
+\mbox{where}
+\quad
+\stk{
+\SYMBEmpty : \Ty \To \Set \\
+\begin{array}{@{}l@{\:\:\mapsto\:\:}l}
+\Empty{\_}   & \Zero \\
+\end{array}
+}\]
+%
+Allowing variables from an empty set is much like forbidding variables,
+so \(\closeTerm\) and \(\HExprD\) describe isomorphic
+datatypes. Correspondingly, you can update an old \(\HExprD\) to a shiny
+\(\closeTerm\):
+%
+\[\stk{
+\update : \muide{\Ty}{\HExprD} \DotTo \muide{\Ty}{\closeTerm} \\
+\begin{array}{@{}l@{}l}
+\update\: \V{ty}\: \V{tm} \mapsto \cataI_{\Ty}\: & (\toIDesc{\HExprD})\:
+                                                  (\muide{\Ty}{\closeTerm})\: \\
+                                                & (\LAM{\_} \LAM{\pair{\V{tag}}{\V{tm}}{}} \Con{\pair{\Su{\V{tag}}}{\V{tm}}{}})\:
+                                                  \V{ty}\:
+                                                  \V{tm}
+\end{array}
+}\]
+% 
+The other direction of the isomorphism is straightforward, the
+$\SYMBDVar$ case being impossible. Therefore, we are entitled to
+reuse the $\evalH$ function to define the semantics of $\closeTerm$.
+
+\newcommand{\discharge}{\F{discharge}}
+
+Now we would like to give a semantics to the open term language. We
+proceed in two steps: first, we substitute variables by their value in
+the context; then, we evaluate the resulting closed term. Thanks to
+$\evalH$, the second problem is already solved. Let us focus on
+substituting variables from the context. Again, we can subdivide this
+problem: first, discharging a single variable from the context; then,
+applying this $\discharge$ function on every variables in the term.
+
+The $\discharge$ function is relative to the required type and a
+context of the right type. Its action is to map values to themselves,
+and variables to their value in context. This corresponds to the
+following function:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\discharge : & \PI{\V{G}}{\Ctxt}
+               \Env{\V{G}} \To 
+               \Var{\V{G}}{} \DotTo
+               \muide{\Ty}{\closeTerm}
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\discharge\: \V{G}\: \V{g}\: \V{ty}\: \V{v} &
+    \Con{\pair{\SYMBEval}{\lookup{\V{G}}{\V{g}}{\V{ty}}{\V{v}}}{}}
+\end{array}
+}\]
+
+\begin{wstructure}
+            /> Then, perform subst everywhere in the term
+                -> Show type [code]
+                /> This is a bind!?
+                -> There is some more structure 
+                    -> We should try to get it
+\end{wstructure}
+
+\newcommand{\substH}{\F{substExpr}}
+
+We are now left with applying $\discharge$ over all variables of the
+term.  We simply have to fill in the right arguments to $\substI$, the
+type guiding us:
+%
+\[
+\stk{
+\begin{array}{@{}ll}
+\substH  : & \PI{\V{G}}{\Ctxt} \\
+           & (\Var{\V{G}}{} \DotTo
+              \muide{\Ty}{\closeTerm}) \DotTo \\
+          & \muide{\Ty}{(\openTerm{\V{G}})} \DotTo 
+            \muide{\Ty}{\closeTerm}
+\end{array} \\
+\substH\: \V{G}\:
+          \V{ty}\:          
+          \V{g}\:
+          \V{\sigma}\: 
+          \V{tm} \mapsto  
+\substI_{\Ty}\:
+               (\SYMBVar\: \V{G})\: 
+               \SYMBEmpty\:
+               \HExprD\: 
+               \V{\sigma}\:
+               \V{ty}\:
+               \V{tm}
+}\]
+
+Hence completing our implementation of the open terms
+interpreter. Without much effort, we have described the syntax of a
+well-typed language, together with its semantics.
+
+
+\paragraph{Indexed descriptions:}
+
+An interesting instance of free monad is $\SYMBIDesc$ itself. Indeed,
+$\SYMBDVar$ is nothing but the \return. The remaining constructors form
+the carrier functor, trivially indexed by $\Unit$. The signature functor
+is described as follow:
+%
+\[\stk{
+\IDescFreeD : \ATagIDesc{\Unit} \\
+\begin{array}{@{}ll}
+\IDescFreeD \mapsto \bigRedBracket{\begin{array}{l}
+                                \sqr{\SYMBDConst\:\:
+                                     \DProd\:\:
+                                     \SYMBDSigma\:\:
+                                     \SYMBDPi} \red{,}\\
+                                  \LAM{\_}\bigRedBracket{\begin{array}{l}
+                                        \DConst{\Set}               \\
+                                        \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
+                                        \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})} \\
+                                        \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})}
+                                    \end{array}}\end{array}}
+\end{array}
+}\]
+%
+We get $\IDesc{\V{I}}$ by extending the signature with variables from \(\V{I}\):
+%
+\[\stk{
+\IDescD : \PI{\V{I}}{\Set} \TagIDesc{\Unit} \\
+\IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{,[}\LAM{\_}\sqr{}\red{,}\LAM{\_}\red{[]]]}}{\Unit}\LAM{\_}\V{I}
+}\]
+
+The fact that indexed descriptions are closed under substitution
+is potentially of considerable utility, if we can exploit this fact:
+\[
+\idescop{\V{\sigma} \V{D}}{\V{J}}{\V{X}} 
+    \mapsto 
+        \idescop{\V{D}}
+                {\V{I}}
+                {\LAM{\V{i}}
+                     {\idescop{\V{\sigma} \V{i}}
+                              {\V{J}}
+                              {\V{X}}}}
+        \quad \mbox{where}\;\V{\sigma}:\V{I}\To\IDesc{\V{J}}
+\]
+By observing that a description can be decomposed via substitution, we
+split its meaning into a superstructure of substructures, e.g. a
+`database containing salaries', ready for traversal operations
+preserving the former and targeting the latter.
+ 
+%\newpage

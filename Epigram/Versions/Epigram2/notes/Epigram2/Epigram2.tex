@@ -1,0 +1,292 @@
+\documentclass{article}
+\usepackage{palatino}
+\usepackage{a4}
+\usepackage{alltt}
+
+\begin{document}
+
+\title{Epigram 2\\
+       more design thoughts}
+\author{Conor McBride}
+\maketitle
+
+\section{Introduction}
+
+With the underlying type theory beginning to settle, it's time to
+think a bit more about how the high-level Epigram language might
+work. This document contains some ideas, and delineates some gaps.
+
+I shall write mainly in the present tense, intending that the
+assertions I make become true at some point.
+
+\section{The Coauthor Transducer Model}
+
+As an experience, Epigram programming is interactive. As a document,
+an Epigram program is the `minute' of an interaction. To load and
+check an Epigram program is to replay the minuted interaction,
+checking its plausibility.
+
+Epigram operates as a \textbf{transducer}, consuming a source
+file, and producing a modified source file, marked up with error
+reports and responses to requests for help. The transducer is
+idempotent. Epigram thus acts like a mechanical coauthor, offering
+opinions and responding to requests for contribution.
+
+Epigram has a high-level \textbf{source} language, in which
+\texttt{.epi} documents are written, and a low-level \textbf{evidence}
+language, into which documents are \textbf{elaborated}. The system
+thus works by constructing a sequence of definitions in the evidence
+language elaborating the definitions found in its input. The
+elaboration process is, by its nature, incremental. The system
+maintains the correspondence between regions of the source document
+and definitions at the evidence layer: the output file may thus be
+generated from the final \textbf{proof state} of the elaboration
+process.
+
+In addition to generating the output file, the system will (on
+request) dump the final proof state in a textual format---a
+\texttt{.gram} file. From a \texttt{.gram} file, both input and output
+\texttt{.epi} files are recoverable, hence the patch from one to the
+other is computable. Given a \texttt{.gram} file and
+a patch to its output \texttt{.epi}, a new input \texttt{.epi} can be
+constructed, which can be processed in turn, resulting in a new output
+\texttt{.epi}, and hence a further patch. Editor integration is thus
+unnecessary, but in any case easy.
+
+A separate (or at least separable) component, based on Edwin Brady's
+\textsc{epic} compiler, can generate an executable from a \texttt{.gram}
+file. The former, if executed, offers a straightforward
+read-eval-print loop for first-order expressions constructed over the
+signature of definitions provided by the original source. Incomplete
+definitions in the source may result in run-time errors: these are the
+only run-time errors.  Such an executable, invoked with an argument,
+treats that argument as a single command session.
+
+Markdown is king.
+
+In the event that Epigram programs ever become large enough to
+necessitate modular development, \texttt{.gram} files will be generated
+on a per-module basis. We may thus become interested in patches
+between states of these \texttt{.gram} files as a means to transmit
+changes downstream.
+
+
+\section{Interactive Problem Solving}
+
+Epigram documents show the declaration and partial solution of problems.
+Problem solving is mediated as an interactive process. Every problem
+in the source language can be encoded as a type in the evidence
+language. Solving a problem in the source language amounts to finding
+an inhabitant of the type which encodes it, by a process of
+hierarchical refinement. This section is not supposed to be a definition:
+it's an explorations.
+
+A \textbf{document} is a series of \textbf{developments}. A
+development comprises a \textbf{declaration} introducing a problem,
+and a \textbf{refinement} reducing the problem to a hopefully
+empty collection of subproblems. Too much abstraction: example, please!
+\newcommand{\capbox}[2]{\raisebox{0.12in}{\begin{array}[t]{|l|}\hline
+      #1 \vspace*{-0.05in}\\
+    \hfill\mbox{\scriptsize{#2}} \\ \hline\end{array}}}
+\newcommand{\Ts}[1]{\texttt{#1}\;}
+\newcommand{\co}{\;:\;}
+\newcommand{\sco}{;\;\;}
+\newcommand{\cm}{,\;}
+\[
+\capbox{
+  \capbox{
+    \capbox{\Ts{x} \cm \Ts{y}\co \Ts{Nat}}{declaration}\\
+    \Ts{--------------}\\
+    \capbox{\Ts{x} \Ts{+} \Ts{y}}{template} \co \capbox{\Ts{Nat}}{type}
+    }
+    {declaration}\\ \\
+  \capbox{
+     \capbox{\Ts{x}\Ts{+}\Ts{y}}{problem}
+       \capbox{\Ts{<=}\capbox{\Ts{induction}\Ts{x}}{eliminator}}{tactic}\\
+     \capbox{
+      \{\;\capbox{\capbox{\Ts{'zero}\Ts{+}\Ts{y}}{problem}
+                  \capbox{\Ts{=} \capbox{\Ts{y}}{term}}{tactic}
+                  \capbox{}{block}
+          }{refinement}\\
+      ;\;\capbox{\capbox{\Ts{'suc}\Ts{x'}\Ts{+}\Ts{y}}{problem}
+                 \capbox{\Ts{=} \capbox{\Ts{'suc}
+                   \capbox{\{.\;.\}}{shed}}{term}}{tactic}
+                  \capbox{}{block}
+         }{refinement}\\
+      \}
+      }{block}
+    }
+    {refinement}}
+    {development}
+\]
+
+Lots of points show up from this example. I'll skim through them,
+starting with the declaration: we give a template for addition,
+hypothesizing declarations for the fields of the template, then giving
+a type for the whole thing. This template determines the initial
+problem. You can tell which tokens in the template are punctuation
+rather than placeholders, because they don't have declarations!
+Note that here, we can see value declarations, but we shall also have
+propositional declarations, \(\texttt{:-}\;P\), where a proposition is
+asserted anonymously---\(P\) then gives the shapes of problems for
+refinement, i.e., propositional goals.
+
+Refinements go `\textbf{problem} \textbf{tactic} \textbf{block}'. A
+refinement is an offer to solve a problem of a particular form.
+Correspondingly, the elaborator needs to check that the refinement
+offered suits the problem or problems at hand: the rigidity of this
+check will soften with time, but the minimum acceptable level is that
+the refinement's problem freely determines the programmer's choice of
+names for the variables in the problem. Working interactively, of course,
+the problem parts of refinements are generated mechanically from the
+problems at hand, ensuring a match.
+
+A tactic provides the means to split a problem into zero or more
+subproblems. The \texttt{<=} (`by') tactic invokes an \textbf{eliminator}
+in the elimination-with-a-motive style. The \texttt{=} (`return') tactic
+takes a term explaining how to compute the return value, and leaves no
+subproblems. There will doubtless be others, not least the notorious
+\texttt{with}.
+
+The \textbf{shed}, \texttt{\{. .\}}, stands in place of a piece of program
+(most syntactic categories, not just terms) to indicate that the programmer
+has yet to choose something, thus causing elaboration to suspend. Note
+that a tactic \texttt{= \{. .\}} does commit to return, where a
+shed directly in a tactic place does not.
+
+Now, in the coauthor transducer model, there is no trigger to fill in
+a shed: one simply replaces the shed with code and reloads. Of course,
+an editor could be customized to give this illusion, and the
+patch-to-patch optimization would yield very similar results. What,
+then, is the interaction?
+
+The basic refinement interaction simply involves the system replacing
+a null block with subproblems which are not accounted for.
+Correspondingly,
+
+\begin{alltt}
+ x , y : Nat
+-------------
+ x + y : Nat
+
+x + y <= induction x
+\end{alltt}
+%
+gets fleshed out to
+%
+\begin{alltt}
+let   x , y : Nat
+     -------------
+      x + y : Nat
+
+x + y <= induction x
+\{ 'zero + y    \{. .\}
+; 'suc x' + y  \{. .\} 
+\}
+\end{alltt}
+
+One might imagine going further, reporting coverage failure by inserting
+subproblems into nonempty blocks. Such a circumstance might readily
+arise if one added constructors to a datatype.
+
+
+\subsection{Query and Response}
+
+In addition to basic refinement functionality, we shall need to equip
+programmers with the means to query the system and receive responses
+in situ. Moreover, we shall need to equip the machine with the means
+to insert remarks in a file. We need anchored comments. The machine
+writes
+\[
+\Ts{\{!}\; \mathit{thing}\; \Ts{!!} \mathit{comment} \Ts{!\}}
+\]
+to indicate that the \(\mathit{comment}\) concerns the \(\mathit{thing}\).
+Such a textual pattern is replaced by \(\mathit{thing}\) on reloading
+(unless \(\mathit{thing}\) is blank, in which case the replacement is an
+empty shed). Machine remarks are ephemeral responses, and should not be
+put into the machine's mouth by the programmer. Meanwhile, an anchored query,
+\[
+\Ts{\{?}\; \mathit{thing}\; \Ts{??} \mathit{query} \Ts{?\}}
+\]
+means the same as \(\mathit{thing}\) (unless empty, in which case it means
+the same thing as an empty shed) but attaches a query; on return, we can
+expect a response in the form given above.
+
+Your basic empty \texttt{\{? ?\}} means
+``What goes here and what's in local scope?''. The basic use of
+\(\Ts{\{!}\; \mathit{thing}\; \Ts{!!} \mathit{comment} \Ts{!\}}\)
+is to report an error. A more amusing possibility would be to offer
+a menu of choices for \(\mathit{thing}\).
+
+It does not take a great leap of imagination to imagine how a fancier
+interface might mediate point-and-click queries via this mechanism.
+Again, one would need the patch-based transducer to support such a
+rapid dialogue.
+
+
+\subsection{Subproblems versus Side-Problems}
+
+The hierarchical refinement of problems delivers the basic necessary
+functionality, but it forces all sorts of auxiliary functions and lemmas
+to be developed globally, in advance (spatially, if not temporally).
+We might prefer to localize the development of helpers. I suggest that
+we allow each refinement to carry a \texttt{where}-clause bearing a local
+module of (partially) solved side-problems. Here's a simple example.
+
+\begin{alltt}
+ f : X -> Y; xs : List X
+-------------------------
+ map f xs : List Y
+
+map f xs = hit xs where
+\{  xs : List X
+  -----------------
+   hit xs : List X
+
+  hit xs <= induction xs
+  \{ hit 'nil = 'nil
+  ; hit ('cons x xs') zs = 'cons (f x) (hit xs') \}\}
+\end{alltt}
+
+Scope-wise, the \texttt{where}-clause comes after the problem statement
+but before tactic and block; textually, it can come before the tactic,
+between tactic and block, or after block.
+
+Note that on a good day with a following wind, the types of helper
+functions can be inferred. One might hope to write
+\begin{alltt}
+ f : X -> Y; xs : List X
+-------------------------
+ map f xs : List Y
+
+map f xs = \{? hit xs ?? helper ?\}
+\end{alltt}
+might deliver
+\begin{alltt}
+ f : X -> Y; xs : List X
+-------------------------
+ map f xs : List Y
+
+map f xs = hit xs where
+\{  xs : List X
+  -----------------
+   hit xs : List X
+
+  hit xs \{! !\} \}
+\end{alltt}
+
+on the basis that the type \texttt{List X} is being pushed into
+the helper application, comprising the function \texttt{hit} applied
+(Miller-pattern-style) to distinct local variables (here just \texttt{xs})
+whose types are known, thus determining \texttt{hit}'s declaration!
+Where the helper function has need of implicit syntax, a little more
+care will be needed to ensure control over what gets abstracted.
+
+Propositional requirements arising in the course of programming might
+also be discharged as side-problems in \texttt{where}-clauses. We do not
+write proofs in terms: we rather expect proofs to be picked up from the
+context, so side-problems allow us to seed the context appropriately.
+Moreover, elaboration models type constraints as propositional equations,
+so you can fix type-glitches (where provably equal types mismatch
+definitionally) by adding the proofs to a \texttt{where}-clause.
+\end{document}

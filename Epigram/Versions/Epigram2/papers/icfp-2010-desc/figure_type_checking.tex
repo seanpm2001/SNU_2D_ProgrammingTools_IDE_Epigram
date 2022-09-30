@@ -1,0 +1,122 @@
+\[\stkc{
+%% Form
+\boxed{\Gamma \Vdash \propag{\push{\CN{exprIn}}{\CN{type}}}{\CN{term}}} 
+\\
+\\
+%% Conversion
+\Rule{\Gamma \Vdash \propag{s}
+                           {\pull{s'}{S}} \quad 
+      \Gamma \Vdash \push{S \equiv T}{\Set}}
+     {\Gamma \Vdash \propag{\push{s}{T}}
+                           {s'}}
+\\
+%% Set in Set
+ \Rule{\Gamma \vdash \Valid}
+      {\Gamma \Vdash \propag{\push{\Set}{\Set}}
+                             {\Set}}
+ \\
+%% Prop
+%% \Rule{\Gamma \Vdash \propag{\push{q}{\Prop}}
+%%                            {q'}}
+%%      {\Gamma \Vdash \propag{\push{\prf{q}}{\Set}}
+%%                            {\prf{q'}}}
+%% \qquad
+%% True
+%% \Axiom{\Gamma \Vdash \propag{\push{\True}{\Prop}}
+%%                             {\True}}
+%% \\
+%% Pi
+ \Rule{\Gamma \Vdash \propag{\push{S}{\Set}}
+                            {S'} \quad
+       \Gamma;\xS' \Vdash \propag{\push{T}{\Set}}
+                            {T'}}
+      {\Gamma \Vdash \propag{\push{\PIS{\xS}{\M{T}}}{\Set}}
+                            {\PIS{\xS'}{\M{T'}}}} 
+ \\
+%% Lambda
+\Rule{\Gamma ; \xS \Vdash \propag{\push{\M{t}}{\M{T}}}
+                                 {\M{t'}}}
+     {\Gamma \Vdash \propag{\push{\LAM{\x} \M{t}}{\PIS{\xS}{\M{T}}}}
+                           {\PLAM{\x}{\M{S}} \M{t'}}} 
+\\
+ %% Sigma
+ \Rule{\Gamma \Vdash \propag{\push{S}{\Set}}
+                            {S'} \quad
+       \Gamma;\xS' \Vdash \propag{\push{T}{\Set}}
+                            {T'}}
+      {\Gamma \Vdash \propag{\push{\SIGMAS{\xS}{\M{T}}}{\Set}}
+                            {\SIGMAS{\xS'}{\M{T'}}}} 
+ \\
+%% Pair
+\Rule{\stkl{ \Gamma \Vdash \propag{\push{\M{s}}{\M{S}}}
+                                  {\M{s'}} \quad
+             \Gamma \Vdash \propag{\push{\M{t}}{\M{T}[\M{s'}/\x]}}
+                                  {\M{t'}}}}
+     {\Gamma \Vdash \propag{\push{\pair{\M{s}}{\M{t}}{}}{\SIGMAS{\xS}{\M{T}}}}
+                           {\pair{\M{s'}}{\M{t'}}{\x.\M{T}}}}
+\\
+%% Split
+\Rule{\Gamma \Vdash \propag{\push{\M{f}}
+   {\PIS{\xS}{\PIS{\Bhab{\V{y}}{\M{T}}}{\M{U}[\pair{\x}{\V{y}}{\x.T}/\V{p}]}}}}{\M{f'}}}
+     {\Gamma \Vdash
+\propag{
+   \push{\spl{\M{f}}}{\PIS{\Bhab{\V{p}}{\SIGMAS{\xS}{\M{T}}}}{\M{U}}}}
+   {\PLAM{\V{p}}{(\SIGMAS{\xS}{\!\M{T}})}}\M{f'}\:(\fst{\V{p}})\:(\snd{\V{p}})
+}
+\\
+\Rule{\Gamma\vdash \Valid}
+     {\Gamma\Vdash \propag{\push{\Unit}{\Set}}{\Unit}}
+\qquad
+\Rule{\Gamma\vdash \Valid}
+     {\Gamma\Vdash \propag{\push{\void}{\Unit}}{\void}}
+
+\\
+%% EnumU
+%% \Axiom{\Gamma \Vdash \propag{\push{\EnumU}{\Set}}
+%%                             {\EnumU}} 
+%% \qquad
+%% %% EnumT
+%% \Rule{\Gamma \Vdash \propag{\push{e}{\EnumU}}
+%%                            {e'}}
+%%      {\Gamma \Vdash \propag{\push{\EnumT{e}}{\Set}}
+%%                            {\EnumT{e'}}}
+%% \\
+%% Tag
+%% EnumU
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \Vdash \propag{\push{\void}{\EnumU}}
+                            {\NilE}}
+\qquad
+\Rule{\Gamma \Vdash \propag{\push{\M{E}}{\EnumU}}
+                                 {\M{E'}}}
+     {\Gamma \Vdash \propag{\push{\pair{\etag{t}}{\M{E}}}{\EnumU}}
+                                 {\ConsE{\etag{t}}{\M{E'}}}}
+\\
+\Rule{\Gamma \vdash \Bhab{E}{\EnumU}}
+     {\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{(\ConsE{\etag{t}}{\M{E}})}}}
+                            {\Ze}}
+\qquad
+\Rule{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{\M{E}}}}
+                           {\M{n}} \quad \etag{t} \neq \etag{t_0}}
+     {\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{(\ConsE{\etag{t_0}}{\M{E}})}}}
+                            {\Su{\M{n}}}}
+\\
+\Rule{\Gamma \vdash \Bhab{E}{\EnumU}}
+     {\Gamma \Vdash \propag{\push{\Ze}{\EnumT{(\ConsE{\etag{t}}{\M{E}})}}}
+                            {\Ze}}
+\qquad
+\Rule{\Gamma \Vdash \propag{\push{\M{n}}{\EnumT{\M{E}}}}
+                           {\M{n'}}}
+     {\Gamma \Vdash \propag{\push{\Su{\M{n}}}{\EnumT{(\ConsE{\etag{t_0}}{\M{E}})}}}
+                            {\Su{\M{n'}}}}
+\\
+%% Switches
+\Rule{\Gamma \Vdash
+  \propag{\push{\sqr{\vec{t}}}{\spi{\M{E}}{(\PLAM{x}{\EnumT{E}}\M{T})}}}
+                           {\M{t'}}}
+     {\Gamma \Vdash
+\propag{\push{\sqr{\vec{t}}}{\PI{\x}{\EnumT{\M{E}}} \M{T}}}
+ {\switch{\M{E}}{(\PLAM{x}{\EnumT{E}}\M{T})}{\M{t'}}}}
+\\
+
+}\]

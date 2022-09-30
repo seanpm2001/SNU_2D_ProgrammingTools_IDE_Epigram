@@ -1,0 +1,505 @@
+\documentclass[authoryear]{sigplanconf}
+
+\usepackage[T1]{fontenc}
+\usepackage{pslatex}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{verbatim}
+\usepackage{pig}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{listings}
+\usepackage{flushend}
+
+\include{macros}
+
+%% Haskell-mode for listings
+\lstnewenvironment{code}{\lstset{language=Haskell,
+                                 basicstyle=\small\ttfamily,
+                                 xleftmargin=1cm}}{}
+
+%% Structure
+%\newenvironment{structure}{\footnotesize\verbatim}{\endverbatim}
+\newenvironment{structure}{\comment}{\endcomment}
+
+%% Written bits of Structure
+\newenvironment{wstructure}{\comment}{\endcomment}
+
+%% Comments
+%% \setlength{\marginparwidth}{0.7in}
+%% \newcommand{\note}[1]{\-\marginpar[\raggedright\footnotesize #1]%
+%%                                   {\raggedright\footnotesize #1}}
+\newcommand{\note}[1]{}
+
+%% Syntax
+\newcommand{\bind}{\emph{bind}\xspace}
+\newcommand{\return}{\emph{return}\xspace}
+
+\begin{document}
+
+\ColourEpigram
+%\MonochromeEpigram
+
+\conferenceinfo{ICFP'10,} {September 27--29, 2010, Baltimore, Maryland, USA.}
+\CopyrightYear{2010}
+\copyrightdata{978-1-60558-794-3/10/09}
+
+%\titlebanner{banner above paper title}        % These are ignored unless
+%\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Title
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\title{The Gentle Art of Levitation}
+
+
+%% Alphabetical ordering.
+\authorinfo{James Chapman}
+           {Institute of Cybernetics, Tallinn University of Technology}
+           {james@cs.ioc.ee}
+\authorinfo{Pierre-\'{E}variste Dagand \\ Conor McBride}
+           {University of Strathclyde}
+           {\{dagand,conor\}@cis.strath.ac.uk}
+\authorinfo{Peter Morris}
+           {University of Nottingham}
+           {pwm@cs.nott.ac.uk}
+
+
+\maketitle
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Abstract
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{abstract}
+  We present a closed dependent type theory whose inductive types
+  are given not by a scheme for generative declarations,
+  but by encoding in a \emph{universe}. Each inductive datatype arises
+  by interpreting its \emph{description}---a
+  first-class value in a datatype of descriptions. Moreover, the
+  latter itself has a description. Datatype-generic programming thus
+  becomes ordinary programming. We show some of the resulting generic
+  operations and deploy them in particular, useful ways on the
+  datatype of datatype descriptions itself. Simulations in existing
+  systems suggest that this
+  apparently self-supporting setup is achievable without paradox or
+  infinite regress.
+\end{abstract}
+
+%\category{CR-number}{subcategory}{third-level}
+\category{D.1.1}{Programming Techniques}{Applicative (Functional) Programming}
+\category{D.3.3}{Language Constructs and Features}{Data types and structures}
+
+\terms
+Design, Languages, Theory
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Introduction
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+Dependent datatypes, such as the ubiquitous vectors (lists indexed by
+length) express \emph{relative} notions of data validity. They allow
+us to function in a complex world with a higher standard of basic
+hygiene than is practical with the context-free datatypes of ML-like
+languages. Dependent type systems, as found in
+Agda~\cite{norell:agda}, Coq~\cite{coq},
+Epigram~\cite{mcbride.mckinna:view-from-the-left}, and contemporary
+Haskell~\cite{cheney:gadt, xi:gadt}, are beginning to make themselves useful. As
+with rope, the engineering benefits of type indexing sometimes
+outweigh the difficulties you can arrange with enough of it.
+
+%Dependent types are an appealing technique for building safer and more
+%reliable software. By giving types more expressive power, the
+%developer is able to encode more precise invariants in the types. As a
+%result, more bugs are caught automatically, during
+%type-checking. Because of this benefit, dependently-typed systems have
+%flourished, such as Generalized Abstract Data-Types (GADT) in
+%Haskell~\cite{spj:gadt}, Agda~\cite{norell:agda},
+%Ynot~\cite{morrisett:ynot}, or Epigram~\cite{pigs:epigram}, to name
+%but a few.
+
+\begin{wstructure}
+<- Describe the problem
+    <- Data-types in dependent-type theory
+        <- Much more precise
+            <- More powerful type-system
+            -> Stronger safety guarantees
+\end{wstructure}
+
+%In this paper, we will focus on data-types in such systems. Indeed,
+%the expressive power of the type-system has a direct impact on
+%data-types. Because types can \emph{depend} on terms, our data-types
+%can be made more precise. The typical example is vectors, which type
+%depend on the size of the vector. Having more precision about
+%data-types, we can write safer code: taking the $\CN{head}$ of a
+%vector is \emph{ensured} to succeed whenever its type states that it
+%is a non-empty vector. This property is automatically enforced by the
+%type-checker.
+
+\begin{wstructure}
+        <- Equipped with elimination principle
+            <- Defining functions over them
+            <- Making proofs over them
+\end{wstructure}
+
+%Moreover, in total programming systems, such as Agda, Ynot, or
+%Epigram, data-types come equipped with an elimination principle: while
+%a data-type definition introduces new type formers in the theory, we
+%need an eliminator to dispose of them. Looking through the
+%Curry-Howard lenses, the elimination principle corresponds to an
+%induction principle associated with the data-type. To program over our
+%data-types, we rely on their induction principle, guaranteeing the
+%well-foundedness of our definition.
+
+\begin{wstructure}
+    <- Agda standard library [Nisse file]
+        <- x implementations of natural numbers
+        <- y implementations of lists
+        -> Painful duplication of code and functionality
+            <- Types are (slightly) different
+                -> Same functions need to be re-implemented 
+        -> Crucial need for ``genericity''
+\end{wstructure}
+
+The blessing of expressing just the right type for the job can also be
+a curse. Where once we might have had a small collection of basic
+datatypes and a large library, we now must cope with a cornucopia of
+finely confected structures, subtly designed, subtly different. The
+basic vector equipment is much like that for lists, but we implement
+it separately, often retyping the same code. The Agda standard
+library~\cite{nisse:asl}, for example, sports a writhing mass of
+list-like structures, including vectors, bounded-length lists,
+difference lists, reflexive-transitive closures---the list is
+petrifying. Here, we seek equipment to tame this gorgon's head with
+\emph{reflection}.
+
+\begin{wstructure}
+        /> Coq, Agda: external notion
+            <- Not first-class citizen
+            -> Cannot "compute" with them
+            -> No reflection for data-types (?)
+\end{wstructure}
+
+The business of belonging to a datatype is itself a notion
+relative to the type's \emph{declaration}. Most typed functional
+languages, including those with dependent types, feature a datatype
+declaration construct, external to and extending the language for
+defining values and programs. However, dependent type systems also
+allow us to reflect types as the image of a function from a set of
+`codes'---a \emph{universe construction}~\cite{martin-lof:itt}. 
+Computing with codes, we expose operations on and
+relationships between the types they reflect. Here, we adopt
+the universe as our guiding design principle. We abolish the
+datatype declaration construct, by reflecting it as a datatype of
+datatype descriptions which, moreover, \emph{describes itself}. This
+apparently self-supporting construction is a trick, of course, but
+we shall show the art of it. We contribute
+
+
+%As in the simply-typed world, the definition of
+%data-types is processed by a meta-theoretical engine, before being
+%reifed by extending the type theory with the corresponding type
+%formers and elimination principle. Because of this external apparatus,
+%data-type definition is not \emph{first-class}: we cannot compute with
+%them, such as making new data-types from previous data-types. 
+%
+%This is a rather harsh limitation, in particular in a
+%dependently-typed system. Indeed, reflection~\cite{allen:reflection,
+%  gregoire:ring-solver} is at the heart of many dependently-typed
+%programming techniques. Not having first-class data-type definitions,
+%we have to give up reflection for data-types.
+
+\begin{wstructure}
+    <- Dependent types offer new programming techniques
+        <- Eg.: universe construction
+        /> State of the art haunted by the simply-typed paradigm
+            -> Generative
+            -> Non reflective
+\end{wstructure}
+
+%However, we do not think that we are condemned to such fate. The
+%external presentation of data-types is an heritage of the simply-typed
+%paradigm. Dependently-typed systems have more to offer. Indeed, new
+%programming techniques, unavailable in a simply-typed setting,
+%arises. One of them is \emph{universe
+%  construction}~\cite{martin-lof:itt}. We shall see how this technique
+%help us overcoming the limitations of the standard, non reflective and
+%generative presentation of data-types.
+
+\begin{wstructure}
+<- State contributions
+    <- Closed presentation of data-types 
+        -> No generativity requires
+        -> Subsuming standard inductive families 
+            /> Some popular extensions excluded for now
+    <- Descriptions of data-types are first-class 
+        <- Self-encoded [Section sec:desc-levitate]
+    <- ``generic programming is just programming''
+        <- Ability to inspect data-type definition
+            -> Write program over them
+        <- A generic program works over a class of data-types (???)
+            -> Capture this class by common structure
+            -> Write a program over this common code
+    <- Design a language for generic programming
+        -> First serious attempt
+            /> except possibly Lisp
+                <- ???
+\end{wstructure}
+
+%In this paper, we propose a new approach to building data-types in a
+%dependent-type theory. Our contributions are the following:
+
+\begin{itemize}
+\item a \emph{closed} type theory, extensible only \emph{definitionally},
+  nonetheless equipped with a universe of inductive families of datatypes;
+\item a \emph{self-encoding} of the universe codes as a datatype in the
+  universe---datatype generic programming is just programming;
+\item a bidirectional \emph{type propagation} mechanism to conceal
+  artefacts of the encoding, restoring
+  a convenient presentation of data;
+\item examples of generic operations and constructions over our universe,
+  notably the \emph{free monad} construction;
+\item datatype generic programming delivered \emph{directly},
+  not via some isomorphic
+  model or `view' of declared types.
+\end{itemize}
+
+We study two universes as a means to explore this novel way to equip a
+programming language with its datatypes. We warm up with a universe of
+\emph{simple} datatypes, just sufficient to describe itself. Once we
+have learned this art, we scale up to \emph{indexed} datatypes,
+encompassing the inductive families~\cite{dybjer:families,luo:utt}
+found in Coq and Epigram, and delivering experiments in generic
+programming with applications to the datatype of codes itself.
+
+We aim to deliver proof of concept, showing that a closed theory with
+a self-encoding universe of datatypes can be made practicable, but we
+are sure there are bigger and better universes waiting for a similar
+treatment. Benke, Dybjer and
+Jansson~\cite{benke:universe-generic-prog} provide a useful survey of
+the possibilities, including extension to inductive-recursive
+definition, whose closed-form presentation~\cite{dybjer:axiom-ir,
+  dybjer:ir-initial-algebra} is both an inspiration for the present
+enterprise, and a direction for future study.
+
+The work of Morris, Altenkirch and
+Ghani~\cite{morris:PhD,morris:spf,alti:lics09} on
+(indexed) containers has informed our style of encoding and the
+equipment we choose to develop, but the details here reflect pragmatic
+concerns about intensional properties which demand care in
+practice. We have thus been able to implement our work as the basis
+for datatypes in the Epigram 2 prototype~\cite{pigs:epigram}. We
+have also developed a \emph{stratified} model of our coding scheme
+in Agda and Coq\footnote{This model is available at \\
+\url{http://personal.cis.strath.ac.uk/~dagand/levitate.tar.gz}}.
+
+
+
+
+%\item We present a basic type-theory and extend it with a universe of
+%  finite sets (Section~\ref{sec:type-theory}). We show how coding can
+%  be made practical by putting types at work ;
+%\item We give a closed presentation of inductive data-types, through a
+%  universe of descriptions (Section~\ref{sec:universe-desc}). This
+%  first universe has the expressive power of simple inductive
+%  types. Being closed, this presentation does not require
+%  generativity, hence the type theory remains unchanged when
+%  data-types are introduced ;
+%\item We present a self-encoding of the universe of description inside
+%  itself (Section~\ref{sec:desc-levitate}). As a consequence,
+%  description of data-types appears as first-class object in the type
+%  theory. We illustrate the benefit of a first-order presentation by
+%  implementing a generic catamorphism as well as a generic free monad
+%  construction, together with its monadic operations ;
+%\item We index the universe of descriptions, to subsume standard
+%  inductive families (Section~\ref{sec:indexing-desc}). In this
+%  setting, we develop several examples of dependently-typed
+%  data-structure and some generic operations over them ;
+%\item We have implemented this technology in the Epigram programming
+%  language. This is, we believe, the first attempt to design a
+%  language for generic programming, Lisp having opened the way. We
+%  propose and demonstrate with several examples that generic
+%  programming is just programming. Because data-types are described by
+%  code, we can finally program with them. As a consequence, generic
+%  programs are implemented as functions built from the data-type
+%  definition.
+%\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% The Type Theory
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{paper_type_theory}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A Universe of simple data-types
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{paper_desc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Levitating the universe of descriptions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{paper_desc_levitation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Indexing descriptions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{paper_idesc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Discussion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{paper_discussion}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Conclusion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \section{Conclusion}
+% 
+% \begin{wstructure}
+% <- System developed in a reasonable theory
+%     <- Pi, Sigma, Finite sets
+%     /> No assumption about the equality
+%     -> Low requirement / high applicability
+% \end{wstructure}
+% 
+% \begin{wstructure}
+% <- Formalize a rationnalized presentation of types
+%     <- Working directly with codes is not practical
+%     -> Bidirectional type-checking
+%         <- Type information flows during type checking/type synthesis
+%         -> Elaboration turns high-level expressions to low-level terms
+%     -> Should not be afraid by codes
+% \end{wstructure}
+% 
+% \begin{wstructure}
+% <- Dependently-typed presentation of simple inductive types
+%     <- Universe of descriptions
+%         <- Based on the specificity of dependent types
+%             <- Universe of codes
+%             <- Sigma types
+%         -> External fix-point and generic induction scheme
+%     <- Rationalised by type propagation
+%         -> Developer does not see the code
+%     <- Self-describing
+%         <- Step-by-step exposition
+%         -> Minimal extension to the type theory
+%             <- Just need fix-point and induction
+%         -> Closed presentation of datatype
+%             -> Non generative
+%         -> datatype is just data
+%     <- Generic programming is just programming
+%         <- Generic catamorphism
+%         <- Generic free monad
+% \end{wstructure}
+% 
+% To introduce our approach, we have presented a universe of
+% description. This universe has the expressive power of simple
+% inductive types, as found in ML-like languages. Further, we have
+% implemented this universe as a self-described object. Hence, for a
+% minimal extension of the type-theory, we get a closed, self-describing
+% presentation of datatypes, where datatypes are just data.
+% 
+% \begin{wstructure}
+% <- Indexed descriptions for dependent datatypes
+%     <- Presented as a slight generalisation of Desc
+%         <- Just add indexing
+%     <- Develop several examples of datatypes
+%         <- Typed syntax
+%         <- Constrained datatype a la GADT
+%     <- Generic indexed programming
+%         <- Indexed free monad
+%         <- Substitution
+% \end{wstructure}
+% 
+% To capture dependent datatypes, we generalise our presentation to
+% support indexing. The universe of indexed descriptions thus built
+% encompasses inductive families. Again, this universe is
+% self-described. We have developed several examples of dependent
+% datatypes and generic functions over them.
+% 
+% \begin{wstructure}
+% <- All of this without cheating
+%     <- Admit a correct stratification
+%     <- Terminating
+%     <- Strictly-positive types
+% \end{wstructure}
+% 
+% We have presented a self-describing, self-hosted universe for
+% datatypes. We have shown the benefit of such approach, by our ability
+% to reflect datatypes in the type-theory. This fosters a new way of
+% considering generic programming: just as programming. Moreover,
+% despite its egg-and-chicken nature, this presentation is free of
+% paradox: it has been formalised in Agda, admitting a correct
+% stratification.
+% 
+% \paragraph{Future work:} As such, indexed descriptions do
+% not cover several extensions of inductive families. One of them is
+% induction-recursion. An interesting question is to locate indexed
+% descriptions in the spectrum between inductive families and indexed
+% induction-recursion. Another popular extension we plan to consider is
+% to allow internal fixpoints and higher-kinded datatypes.
+% 
+% Also, we have presented a generic notion of syntax with variables,
+% thanks to the free monad construction. We would like to explore a
+% notion of syntax with binding. Interestingly, introducing internal
+% fixpoints or kinds would turn our universe into such syntax with
+% binding. Once again, levitation would reveal itself convenient by
+% providing generic tools to handle binding.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Appendices
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \appendix
+% \section{Appendix Title}
+
+% This is the text of the appendix, if you need one.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Acknowledgments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\acks
+
+We are grateful to Jos\'{e} Pedro Magalh\~{a}es for his helpful
+comments on a draft of this paper. We are also grateful to the Agda
+team, without which levitation would have been a much more perilous
+exercise. J. Chapman was supported by the Estonian Centre of
+Excellence in Computer Science, EXCS, financed by the European
+Regional Development Fund. P.-\'{E}. Dagand, C. McBride and P. Morris
+are supported by the Engineering and Physical Sciences Research
+Council, Grants EP/G034699/1 and EP/G034109/1.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Bibliography
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\bibliography{paper}
+\bibliographystyle{abbrvnat}
+
+% The bibliography should be embedded for final submission.
+%\begin{thebibliography}{}
+%\softraggedright
+%\end{thebibliography}
+
+\end{document}

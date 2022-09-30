@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>Emanuel: the Epigram manual</title>
+ </head>
+ <body>
+  <header>
+    <h1>Emanuel</h1>
+    <h2><i>the Epigram manual</i></h2>
+  </header>
+  <section>
+   <h3>Chapter 1 - Introduction</h3>
+   <p> Epigram 2 is intended to be a full-scale dependently typed
+    programming language in the spirit of Epigram 1 and Agda. It isn't
+    finished yet. This document explains how to interact with the
+    system as it exists at the moment.
+   </p>
+   <p>
+    Work on the high level programming language has just started. In
+    the meantime we can write programs in a more low level fashion
+    using Cochon. Cochon looks more like a theorem prover than a
+    programming IDE and it's quite low level; if you look closely you
+    can see the cogs whirring. Read on for a tutorial of how to write
+    some simple programs in Cochon. For a glossary of Cochon commands
+    skip to the appendix.
+   </p>
+  </section>
+  <section>
+   <h3>Chapter 2 - Installation</h3>
+   <p>
+    For downloading and installing Epigram
+    <a href="../web/download.html">look here</a>.
+   </p>
+  </section>
+  <section>
+   <h3>Chapter 3 - Running Epigram</h3>
+   <p>
+    For the moment we interact with Epigram using the Cochon
+    interactive theorem prover. You can invoke it directly at the command line:
+   </p>
+   <p>
+    <code>$ Pig</code>
+   </p>
+   <p>Cochon responds with a prompt:</p>
+   <p><code>&gt;</code></p>
+   <p>To exit Cochon you can type
+   <p><code>&gt; quit</code>
+   <p>and press return.</p>
+
+   <p>You can also run it in emacs if you insert something like this
+   in your <code>.emacs</code>:</p>
+   <p><code>(load "/home/dave/Pig09/pigmode.el")</code></p>
+   <p>Then when you open a <code>.pig</code> file you should get some
+   syntax highlighting. A pig file is just a sequence of Cochon
+   commands seperated by semicolons. With the cursor on the first line
+   of said pig file, press C-c C-r. This will open a seperate emacs
+   'window' for Cochon in the bottom half of the 'frame' and send the
+   first line of your file to it. Further presses of C-c C-r will send
+   subsequent lines. We can interact with (and quit!)  Cochon in its
+   emacs window just as we did from the command line.</p> Have a look
+   in the <code>test</code> directory for some
+   sample <code>.pig</code> files.
+  </section>
+  <section>
+   <h3>Chapter 4 - My first Epigram Program: 2 + 2</h3>
+   <p>
+    As a first warm-up exercise we will perform the arithmetic feat of
+    adding two and two. First of all let's define the natural numbers
+    in Peano style. Enter the following at Cochon's prompt and press
+    return:
+   </p>
+   <p><code>&gt; data Nat := ('zero : Nat) ; ('suc : Nat -&gt; Nat)</code></p>
+   <p>We defined a new data type <code>Nat</code> and with two
+   constructors <code>'zero</code> which takes no arguments
+   and <code>'suc</code> which takes a natural number and gives us
+   back another natural number. The <code>'</code> is Epigram's
+   current notation for a constructor name. There are two canonical
+   forms of natural number: either it's zero; or it's the successor of
+   another natural number. When we define a datatype in Epigram, and
+   give constructors for its canonical forms, we are automatically
+   given a computation mechanism (an elimination principle) which says
+   that if we want to write a program that consumes elements of that
+   datatype we need only explain what to do for its canonical
+   forms. This is because any element of a datatype is equal to an
+   element in canonical form.
+   </p>
+   <p>If we want to look at the gory details of what this has
+   generated we can type</p>
+   <p>
+    <code>&gt; show state</code>
+   </p>
+   <p>
+    Having defined <code>Nat</code> we can now define some numbers. Let's
+    dip our metaphorical toe in the water by defining the number one.
+   </p>
+   <p>
+    <code>&gt; make one : Nat</code>
+   </p>
+   <p>Cochon responds</p>
+   <p>
+    <code>
+      Appended goal!<br>
+      Goal: Nat
+    </code>
+   </p>
+   <p>and the prompt has changed:</p>
+   <p><code>one_1 &gt;</code></p>
+   <p>This tells us we are no longer at the root of the proof state,
+   instead we are inside the goal one_1. The <code>_1</code> part is
+   just appended to the name internally to guarantee that names are
+   unique. This is an example of the innards visible in Cochon.</p>
+   <p>
+    We have created a programming problem called <code>one^1</code> of
+    type <code>Nat</code>. We can fill it in directly by responding:
+   </p>
+   <p>
+    <code>&gt; give 'suc 'zero</code> 
+   </p>
+   <p>Cochon responds</p>
+   <p><code>Thank you.</code></p>
+   <p>Note that <code>one</code> doesn't have an apostrophe at the
+   beginning as it is not a constructor. We can 'test' our new
+   definition by typing:</p>
+   <p><code>&gt; elab one</code></p>
+   <p>Cochon responds</p>
+   <p><code>'suc 'zero</code></p>
+   <p>Well, that's a relief!</p>
+   <p>For the purposes of doing some gratuitous navigation in Cochon
+   let's define a couple more constants:</p>
+   <p><code>&gt; make two : Nat</code></p>
+   <p>We're placed inside our newly created goal by Cochon. This time
+   we won't fill it in immediately instead let's go back out to the
+   root and make another definition.</p>
+   <p><code>two_2 &gt; out</code></p>
+   <p>This takes us out a level. In this case it is to the root of the
+   proof state (as we can see from the Cochon prompt). We could have
+   achieved the same thing by typing:</p>
+   <p><code>two_2 &gt; root</code></p>
+   <p>Let's make another definition:</p>
+   <p><code>&gt; make three : Nat</code></p>
+   <p>Cochon places us inside new goal:
+   <p><code>three_3 &gt;</code></p>
+   <p>To return to the previous one we type:</p>
+   <p><code>three_3 &gt; prev</code></p>
+   <p>Let's fill it in:</p>
+   <p><code>two_2 &gt; give 'suc one</code></p>
+   <p>Cochon politely thanks us and moves us to the next goal which we
+   can fill in too:</p>
+   <p><code>three_3 &gt; give 'suc two</code></p>
+   <p>With this our work is done and we're back at the root. We can
+   test our last definition by typing:</p>
+   <p><code>&gt; elab three</code></p>
+   <p>Having mastered the art of defining constants let's define a
+   recursive function next.</p>
+   <p><code> &gt; let plus (m : Nat)(n : Nat) : Nat</code></p>
+   <p>
+    <code>
+     Let there be plus.<br>
+     \ m : Nat -&gt;<br>
+     \ n : Nat -&gt;<br>
+     Programming: &lt; plus m n : Nat &gt;<br>
+    </code>
+   </p>
+   <p>So, we now have a programming problem, our context
+   contains <code>m</code> and <code>n</code> of type <code>Nat</code>
+   and we must deliver a <code>Nat</code>. To solve programming
+   problems we use the <code>refine</code> tactic. We give a left hand
+   side which allows us to choose suitable names for the arguments,
+   either <code>&lt;=</code> (invoke a principle such as induction)
+   or <code>=</code> (return something) and a right hand side. Here we
+   indicate to Cochon that we would like to proceed by induction
+   on <code>m</code>:</p>
+   <p><code>... &gt; refine plus m n  &lt;= Nat.Ind m</code></p>
+   <p>Cochon tells us that things have been <code>Eliminated and
+   simplified.</code> Simplified? To me it looks more complicated but
+   if we look carefully we see our context and the programming problem have
+   changed:</p>
+   <p><code>\ n : Nat -><br>
+            Programming: &lt; plus 'zero n : Nat &gt;</code></p>
+   <p>We know very well that 0 + n = n and our first thought might be
+   to respond <code>give n</code>. But this doesn't work. Our goal is
+   not just a natural number it is a <i>programming problem</i> which
+   must be sovled using <code>refine</code>, this time accompanied
+   by <code>=</code>.  So, we must type:</p>
+   <p>
+    <code>
+     ... &gt; refine plus 'zero n = n
+    </code>
+   </p>
+   <p>After pressing return Cochon
+   says <code>Hurrah.</code> and moves us to the next goal:</p>
+   <p><code>Programming: &lt; plus ('suc xf) n : Nat &gt;</code></p>
+   <p><code>xf</code> isn't the nicest name, <code>m</code> would be
+   better so we type:</p>
+   <p><code>... &gt; refine plus ('suc m) n := 'suc (plus m n)</code></p>
+
+   <p>Cochon responds with <code>Hurrah!</code>. Our definition is
+   complete but we are left inside it. To extracate ourselves we can type</p>
+   <p><code>... &gt; root</code></p>
+   <p>and then to check that 2 + 2 indeed equals 4:</p>
+   <p><code>&gt; elab plus two two</code></p>
+   <p>
+    <code>'suc ('suc ('suc ('suc 'zero)))</code></p>
+   <p>Well, thank god for that! Our first Epigram program is finished.</p>
+   <p>If you have EPIC installed you can also compile</p>
+   <p>
+    <code>
+      &gt; make twoplustwo : Nat<br>
+      &gt; give plus two two<br>
+      &gt; compile twoplustwo twoplustwo
+    </code>
+   </p>
+  </section>
+  <section>
+  <h3>Chapter 5 - Vectors and Finite sets</h3>
+   <p>This section started out as the epilogue
+   post <a href="http://www.e-pig.org/epilogue/?p=683">The Art of the
+   Possible</a>.</p>
+
+   <p>Peter's shiny new <code>idata</code> tactic allows
+   indexed data types to be written in a nice syntax (nicer than codes,
+   anyway):</p>
+   <p><code>&gt; idata Vec (A : Set) : Nat -&gt; Set := ('nil : Vec A 'zero) ;
+   ('cons : A -&gt; (n : Nat) -&gt; Vec A n -&gt; Vec A ('suc n))
+   </code></p>  
+   <p>
+   As in Agda, parameters occur before the colon and indices
+   afterwards. We define vectors, parameristed by a carrier
+   type <code>A</code> and indexed by their length (hence the
+   type <code>Nat -&gt; Set</code>). The empty vector is
+   made by the constructor <code>'nil</code> which takes no arguments and has
+   length <code>'zero</code>. A nonempty vector is made by the
+   constructor <code>'cons</code> which attaches a new element to an
+   old vector. It takes arguments for the new
+   element of the carrier <code>A</code>, the length of the old
+   vector <code>(n : Nat)</code>, the old vector of type <code>Vec A n</code>
+   and produces a new vector of type <code>Vec A ('suc n)</code>. The
+   explicit length argument to <code>'cons</code> will be made
+   implicit in the future.
+
+   <p>Once we have <code>plus</code> and vectors, what could be more
+   natural than writing vector append? Apart from the extra noise of
+   the explicit length arguments the program is identical to list
+   append. In the future we will be able to make the lenght arguments
+   implicit on the left and the right as we do in Agda. One could also
+   say that without the extra noise of the elements of <code>A</code>
+   the program is identical to <code>plus</code>.</p>
+
+   <p><code>
+     &gt; let append (A : Set)(m : Nat)(as : Vec A m)(n : Nat)(bs : Vec
+       A n) : Vec A (plus m n) ;<br />
+     &gt; refine append A m n as bs &lt;= Vec.Ind A m as ;<br />
+     &gt; refine append A 'zero 'nil n bs := bs ;<br />
+     &gt; refine append A ('suc k) ('cons
+        a k as) n bs := 'cons a (plus k n) (append A k as n bs) ;<br />
+     &gt; root
+   ;</code></p>
+
+   <p>Finally, let us test our function:</p>
+
+   <p><code>&gt; make as := 'cons 'true one ('cons 'false 'zero 'nil) : Vec
+   Bool two ;<br />&gt; make bs := 'cons 'false one ('cons 'true 'zero 'nil)
+   : Vec Bool two ;<br />&gt; elaborate append Bool two as two bs
+   ;</code></p>
+
+   <p>We can use the length information present in the type of a
+   vector to guarantee that we never get an error akin to 'array index
+   out of bounds'. To do this we introduce a type of bounded
+   indices: <code>Fin</code> and then use it to write a safe lookup
+   function. This type will be familiar to some but it's rather
+   mysterious if you haven't seen it before. The idea is that it
+   represents elements of a finite set of indices which is indexed by
+   its size. <code>Fin n</code> corresponds to the set {0,...,n}. The
+   element <code>'zero</code> is present in all non-empty finite sets
+   hence its type <code>Fin ('suc n)</code> for
+   any <code>n</code>. The constructor <code>'suc</code> makes an
+   element a non-empty finite set by taking an element in a finite set
+   one shorter. Note there is no way of making an element of the empty
+   finite set as neither constructor can target <code>Fin
+   'zero</code>. The best way to get your head around this type is to
+   try to enumerate all the possible elements of the first few finite
+   sets: <code>Fin 'zero</code>; <code>Fin ('suc 'zero)</code>;
+   etc.</p>
+
+   <p><code>&gt; idata Fin : Nat -&gt; Set := ('zero : (n : Nat) -&gt; Fin ('suc
+   n)) ; ('suc : (n : Nat) -&gt; Fin n -&gt; Fin ('suc n)) ; </code></p>
+
+   <p>Having defined <code>Fin</code> we can now define a lookup
+   function for vectors that will never go out of bounds, we do this
+   by taking a vector of length <code>n</code> and an index from a
+   finite set of <code>n</code> elements.</p>
+
+   <p><code>&gt; let lookup (A : Set)(n : Nat)(as : Vec A n)(i : Fin n) : A
+   ;</code></p>  
+
+   <p>We proceed by induction on the index <code>i</code>. We could
+   have chosen to start with induction on the vector <code>as</code>
+   but choosing the index means we only have to deal with cases for
+   the possible indexes, there are only indexes in non-empty index sets and
+   hence into non-empty vectors.</p>
+
+   <p><code>&gt; refine lookup A n as i &lt;= Fin.Ind n i ;</code></p>
+
+   <p>This gives us a programming problem:</p>
+
+   <p><code>Programming: &lt; lookup A ('suc n) as ('zero n)
+   &gt; </code></p>
+
+   <p>We notice that the length argument is <code>'suc n</code> and
+   sure enough if we do case analysis on the vector <code>as</code> we
+   will only get a case for <code>'cons</code>. Here we use induction
+   as a heavy handed way of doing case analysis. Case analysis is a
+   neutered induction with the inductive hypothesis cut off.</p>
+
+   <p><code>&gt; refine lookup A ('suc n) as ('zero n) &lt;= Vec.Ind A ('suc
+   n) as ;<br>
+           Programming: &lt; lookup A ('suc n) ('cons n a as) ('zero n) : A &gt;
+ </code></p>
+
+  <p>Having performed enough analysis we can fill in this case, for
+  the index <code>'zero</code> we will return the head
+  element <code>a</code> of the vector:</p>
+  
+  <p><code>&gt; refine lookup A ('suc n) ('cons n a as) ('zero n)  = a ; </code></p>
+
+  <p>Epigram responds <code>Hurrah!</code> and presents us with the
+  next problem:</p>
+
+  <p><code>Programming: &lt; lookup A ('suc n) as ('suc n i) : A &gt;</code></p>
+
+  <p>As before we must have a non-empty vector as the length argument
+  is <code>'suc n</code>. We do case analysis on the vector with our induction
+  principle again and get a more informative problem:</p>
+
+  <p><code>&gt; refine lookup A ('suc n) as ('suc n i) &lt;= Vec.Ind A ('suc
+  n) as ; <br>
+           Programming: &lt; lookup A ('suc n) ('cons n a as) ('suc n i)
+  : A &gt;</code></p>
+
+  <p>This time our index is greater than zero, so we must peal off the
+  outer <code>'cons</code> constructor of the vector
+  and continue the lookup on the tail of the vector. To do this we
+  also decrement the index by one by pealing off the <code>'suc</code>
+  constructor:</p>
+
+  <p><code>&gt; refine lookup A ('suc n) ('cons n a as) ('suc n i)  = lookup A n
+  as i ; </code></p>
+
+  <p>We get another <code>Hurrah!</code> and our definition is
+  complete. We have defined a lookup function that takes a vector and
+  an index that is guaranteed to be within the vector and we return an
+  element of the vector's carrier. What would this function do if we
+  didn't give it the index argument? It would be a function that takes
+  a vector <code>Vec A n</code> and returns a function <code>Fin n -&gt;
+  A</code>. What is such a function? It is a higher-order
+  representation of a vector. So, lookup takes a first order vector
+  and returns a higher order one. Can we go the other way? Yes. Let's
+  define a function <code>tabulate</code> which takes a function of
+  type <code>Fin n -&gt; A</code> and gives us a first order
+  representation of it as a type <code>Vec A n</code>.
+
+  <p><code>&gt; let tabulate (A : Set)(n : Nat)(f : Fin n -&gt; A) : Vec A n
+  ; </code><p>
+
+  <p>How do we proceed? Well, there's not choice, let's do induction
+  on <code>n</code>:</p>
+
+  <p><code>&gt; refine tabulate A n f &lt;= Nat.Ind n ; </code></p>
+
+  <p>This gives us the programming problem:</p>
+  
+  <p><code>Programming: &lt; tabulate A 'zero f : Vec A 'zero &gt;</code></p>
+
+  <p>Well, we don't need to use our brains just yet. We need to make
+  an empty vector. So, we only have one option; <code>'nil</code>.</p>
+  
+  <p><code>&gt; refine tabulate A 'zero f = 'nil ; </code></p>
+
+  <p>On to the case for <code>'suc</code>:</p>
+
+  <p><code>Programming: &lt; tabulate A ('suc n) f : Vec A ('suc n) &gt;</code></p>
+
+  <p>The idea is to fill the vector from left to right by enumerating
+  f 0, f 1, f 2, etc. So, we start by <code>'cons n (f ('zero
+  n))</code> but what do we give as the tail of the vector? If we look
+  in the context we can see that can invoke our inductive
+  hypothesis <code>&lt; tabulate A n f : Vec A n &gt;</code>. This
+  will do fine for the tail of the vector the only problem is we need
+  a function <code>f</code> of type <code>Fin n -&gt; A</code> and
+  our <code>f</code> is of type <code>Fin ('suc n) -&gt; A</code>. If
+  we were somehow able to overlook this type error then we'd end up
+  with a vector f 0, f 0, f 0, etc. We need to increment the index
+  each time we make a recursive call. We do this by passing the
+  function <code>\ i -&gt; f ('suc n i)</code> to tabulate with does
+  the job and has the correct type:</p>
+
+   <p><code>&gt; refine tabulate A ('suc n) f = 'cons n (f ('zero n))
+   (tabulate A n (\ i -&gt; f ('suc n i))) ; </code></p>
+
+  </section>
+  <section>
+  <h3>Lambda Calculus</h3>
+  <p>We can define the well-scoped lambda terms as an datatype indexed
+  by the number of varialbes it in scope. Any term of this type will
+  be guaranteed to be well-scoped, it will have no possibility of
+  dangling variables or unintended capture. We use the
+  type <code>Fin</code> again. This time to represent nameless
+  variables as de Bruijn indices:</p>
+
+  <p><code>&gt; idata Fin : Nat -&gt; Set := ('zero : (n : Nat) -&gt; Fin ('suc
+  n)) ; ('suc : (n : Nat) -&gt; Fin n -&gt; Fin ('suc n)) ; </code></p>
+
+  <p>Before proceeding to define lambda terms we explain how to weaken
+  a renaming:</p>
+
+  <p><code>let wk (m : Nat)(n : Nat)(f : Fin m -&gt; Fin n)(i : Fin ('suc
+  m)) : Fin ('suc n) ;<br>
+  refine wk m n f i &lt;= Fin.Ind ('suc m) i ;<br>
+  refine wk m n f ('zero m) = 'zero n ;<br>
+  refine wk m n f ('suc m i) = 'suc n (f i) ;
+  </code></p>
+
+  <p>The data type of lambda terms is defined as follow:</p>
+
+  <p><code>idata Lam : Nat -&gt; Set := ('var : (n : Nat) -&gt; Fin n -&gt; Lam
+  n) ; ('app : (n : Nat) -&gt; Lam n -&gt; Lam n -&gt; Lam n) ; ('lam : (n :
+  Nat) -&gt; Lam ('suc n) -&gt; Lam n) ;</code></p>
+
+  <p>Having defined lambda terms we define renaming:</p>
+
+  <p<code>let ren (m : Nat)(n : Nat)(f : Fin m -&gt; Fin n)(t : Lam m)
+  : Lam n ; <br>
+  refine ren m n f t &lt;= Lam.Ind m t ; <br>
+  refine ren m n f ('var m i) = 'var n (f i) ; <br>
+  refine ren m n f ('app m t u) = 'app n (ren m n f t) (ren m n f u) ; <br>
+  refine ren m n f ('lam m t) = 'lam n (ren ('suc m) ('suc n) (wk m n f)
+		      t) ; 
+  </code></p>
+
+  <p>Unfortunately feeding the last line of this definition to Cochon
+  triggers a space leak at the time of writing</p>
+
+  </section>
+  <section>
+   <h3>Appendix - List of Cochon commands</h3>
+    <dl>
+     <dt><code>quit</code></dt>
+     <dd>Leave Cochon.</dd>
+     
+     <dt>
+      <code>
+       data <i>name</i> := (<i>'con</i> : <i>type</i>) ; ...
+      </code>
+     </dt>
+     <dd>Introduce a new data type. Note that constructor names must
+     begin with an apostrophe.</dd>
+
+     <dt>
+      <code>
+       idata <i>name</i> (<i>name</i> : <i>type</i>) : <i>type</i> := (<i>'con</i> : <i>type</i>) ; ...
+      </code>
+     </dt>
+     <dd>Introduce a new indexed data type. Note that constructor
+     names must begin with an apostrophe.</dd>
+     
+     <dt><code>make <i>name</i> : <i>type</i></code></dt>
+     <dd>Introduce a new definition.</dd>
+     
+     <dt><code>give <i>expr</i></code></dt>
+     <dd>Fill in current goal with an expression.</dd>
+    
+     <dt><code>let <i>name</i> : <i>type</i></code></dt>
+     <dd>Introduce a new (recursive) definition.</dd>
+     
+     <dt><code>refine <i>name</i> <i>arg1 ...</i> [&lt;=,=] <i>expr</i></code><dt>
+     <dd>Fill in a programming problem. It allows us to rename the
+     arguments, then indictate whether
+     we invoking some further principe to analyze the problem further
+     (e.g by induction) by <code>&lt;=</code> or we use <code>=</code> to
+     indicate that we are going to return something. Then we give a
+     right hand side, be it a principle or a return value.</dd>
+
+     <dt><code>elab <i>expr</i></code></dt>
+     <dd>Elaborate an expression.</dd>
+     
+     <dt><code>root</code></dt>
+     <dd>Go to the top-level of the proof state.</dd>
+
+     <dt><code>in</code></dt>
+     <dd>Go in one level in the proof state.</dd>
+
+     <dt><code>out</code></dt>
+     <dd>Go out one level in the proof estate.</dd>
+
+     <dt><code>show state</code></dt>
+     <dd>Print the bit of the proof state we're in.</dd>
+
+     <dt><code>next</code></dt>
+     <dd>Go to next goal.</dd>
+
+     <dt><code>prev</code></dt>
+     <dd>Go to previous goal.</dd>
+    </dl>
+  </section>
+  <footer>
+  <hr>
+   <address>Last modified 2nd September 2010 by James Chapman</address>
+  </footer>
+ </body>
+</html>

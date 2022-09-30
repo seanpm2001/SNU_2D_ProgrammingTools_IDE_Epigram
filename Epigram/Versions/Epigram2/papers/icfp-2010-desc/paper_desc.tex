@@ -1,0 +1,521 @@
+\section{A Universe of Inductive Datatypes}
+\label{sec:universe-desc}
+
+\begin{wstructure}
+<- Why starting with simple datatypes
+    <- For pedagogical purposes
+        <- datatypes as we know them every day
+        /> Target dependent types
+    -> Cut down version of Induction Recursion
+        -> Presentation evolves independently as we go to dependent types
+\end{wstructure}
+
+In this section, we describe an implementation of inductive types, as
+we know them from ML-like languages. By working with familiar datatypes,
+we hope to focus on the delivery mechanism, warming up gently to the
+indexed datatypes we really want.  % Our encoding is inspired by
+Dybjer and Setzer's closed formulation of
+induction-recursion~\cite{dybjer:axiom-ir}, but without the
+`-recursion'.  An impredicative Church-style encoding of datatypes is
+not adequate for dependently typed programming, as although such
+encodings present data as non-dependent eliminators, they do not
+support dependent \emph{induction}~\cite{geuvers:induction-not-derivable}.
+Whilst the \(\LAMBINDER\)-calculus captures all that data can \emph{do},
+it cannot ultimately delimit all that data can \emph{be}.
+
+\subsection{The power of $\Sigma$}
+
+\begin{wstructure}
+<- The duality of Sigma
+    <- Sigma generalises sum over arbitrary arities
+        -> \Sigma A B == \Sigma_{x : A} B x
+    <- Sigma generalises product to have a dependant second component
+        -> \Sigma A B == (x : A) \times (B x)
+\end{wstructure}
+
+In dependently typed languages, $\Sigma$-types can be interpreted as
+two different generalisations. This duality is reflected in the
+notation we can find in the literature. The notation
+$\blue{\Sigma}_{\x : \M{A}} (\M{B}\: \x)$ stresses that
+$\Sigma$-types are `dependent sums', generalising sums over
+arbitrary arities, where simply typed languages have finite sums.
+
+On the other hand, our choice, $\SIGMA{\x}{\M{A}}
+(\M{B}\:\x)$, emphasises that $\Sigma$-types generalise products,
+with the type of the second component depending on the value of the
+first. Simply typed languages do not express such relative validity.
+
+\begin{wstructure}
+<- datatypes in the simply-typed world
+    -> "sums-of-product"
+        <- Sum of constructors
+        <- Product of arguments
+<- datatypes in the dependently-typed world
+    -> "sigmas-of-sigmas"
+    /> Need ability to manipulate these sigmas
+        -> Define a Code for datatypes
+        -> Together with a sigma-based Interpretation
+\end{wstructure}
+
+In ML-like languages, datatypes are presented as a
+\emph{sum-of-products}. A datatype is defined by a finite sum of
+constructors, each carrying a product of arguments. To embrace
+these datatypes, we have to capture this grammar.
+With dependent types, the notion of sum-of-products translates into
+\emph{sigmas-of-sigmas}.
+
+
+\subsection{The universe of descriptions}
+\label{sec:desc-universe}
+
+\begin{wstructure}
+<- Introduction to Universe construction
+    <- Define a Code
+        -> Name objects
+    <- Define an Interpretation of codes into the type theory
+        -> Give a semantics to objects
+    -> Ability to manipulate code
+    -> Ability to compute with these objects
+\end{wstructure}
+
+While sigmas-of-sigmas can give a \emph{semantics} for the
+sum-of-products structure in each node of the tree-like values in a
+datatype, we need to account for the recursive structure which
+ties these nodes together. We do this by
+constructing a \emph{universe}~\cite{martin-lof:itt}. Universes
+are ubiquitous in dependently typed
+programming~\cite{benke:universe-generic-prog, oury:power-of-pi},
+but here we take them as the foundation of our notion
+of datatypes.
+
+%The key idea behind universe construction is our ability to make names
+%by defining new types. These names are called \emph{codes}. By
+%defining a set of codes, we define the syntax of a language. To give
+%it a semantics, we \emph{interpret} these codes back into the type
+%theory. Hence, codes act as labels, while the type theory provides the
+%computational machinery. Codes being mere labels, we can inspect them,
+%hence regaining structural information. We can also compute over them:
+%deriving new codes from others, or even functions on them.
+
+\begin{wstructure}
+<- Justification of the code 
+    <- [both figures]: cannot be read separately
+    <- Mimic the standard grammar of datatypes description
+        -> Just as we already know it
+        <- '\Sigma for making sigmas-of-sigmas
+        <- 'indx for exhibiting the functoriality
+            -> For recursive arguments
+        <- '1 for end of description
+\end{wstructure}
+
+To add inductive types to our type theory, we build a universe of
+datatype \emph{descriptions} by implementing the signature presented
+in Figure~\ref{fig:desc_universe}, with codes mimicking the grammar of
+datatype declarations. We can read a description $\V{D}:\Desc^{n}$ as
+a `pattern functor' on $\Set^{n}$, with $\SYMBdescop{\V{D}}$ its
+action on an object, \(\V{X}\), soon to be instantiated
+recursively. The superscripts indicate the $\Set$-levels at which we
+\emph{expect} these objects in a stratified system. This is but an
+informal notation, to give a flavour of the stratified
+presentation. Note that the functors so described are \emph{strictly
+  positive}, by construction.
+
+Descriptions are sequential structures ending in $\DUnit$,
+indicating the empty tuple. To build sigmas-of-sigmas, we provide a
+$\SYMBDSigma$ code, interpreted as a $\Sigma$-type. To request a
+recursive component, we have $\DIndx{\V{D}}$, where \(\V{D}\)
+describes the rest of the node. These codes give us
+sigmas-of-sigmas with recursive places. An equivalent, more algebraic presentation
+could be given, as illustrated in Section~\ref{sec:indexing-desc}.
+
+\begin{figure}
+\[\stk{
+\begin{array}{@{}ll}
+\Desc^n 
+    &: \Set^{n+1}\\
+\DUnit 
+    &: \Desc^{n}\\
+\DSigma{(\Bhab{\V{S}}{\Set^{n}})}{(\Bhab{\V{D}}{\V{S} \To \Desc^{n}})} 
+    &: \Desc^{n}\\
+\DIndx{(\Bhab{\V{D}}{\Desc^{n}})} 
+    &: \Desc^{n} \\
+\end{array}
+\smallskip\\
+\begin{array}{l@{\V{X}\:\mapsto\:}l}     
+\multicolumn{2}{l}{\descop{\_\:}{} : \Desc^{n} \To \Set^{n} \To \Set^{n}} \\
+ \descop{\DUnit}{} &  \Unit \\
+ \descop{\DSigma{\V{S}}{\V{D}}}{} &
+     \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{X}}}  \\
+\descop{\DIndx{\V{D}}}{}  &  \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
+\end{array}
+}\]
+
+\caption{Universe of Descriptions}
+\label{fig:desc_universe}
+ 
+\end{figure}
+
+We admit to being a little coy,
+writing of `implementing a signature' without clarifying how. A viable
+approach would simply be to extend the theory with constants for the
+constructors and an operator for \(\descop{\V{D}}\). In
+Section~\ref{sec:desc-levitate}, you will see what we do instead.
+Meanwhile, let us gain some intuition by developing examples.
+
+\subsection{Examples}
+\label{sec:desc-examples}
+
+\begin{wstructure}
+<- Nat
+    <- Sum of zero, suc
+    <- zero case: done
+    <- suc case: leave open and done
+    -> NatD Z = 1 + Z
+\end{wstructure}
+
+We begin with the natural numbers, now working in the high-level
+expression language of Section~\ref{sec:type-propagation}, exploiting
+type propagation.
+%
+\[\stk{
+\NatD : \Desc^n \\
+\NatD \mapsto \DSigma{\EnumT{\sqr{\NatZero\: \SYMBNatSuc }}}
+                     {\sqr{ \DUnit \quad (\DIndx{\DUnit}) }}
+}\]
+%
+Let us explain its construction. First, we use $\SYMBDSigma$ to
+give a choice between the $\NatZero$ and $\SYMBNatSuc$ constructors.
+What follows depends on this choice, so we write the function
+computing the rest of the description in tuple notation.  In the
+$\NatZero$ case, we reach the end of the description. In the
+$\SYMBNatSuc$ case, we attach one recursive argument and close the
+description. Translating the \(\Sigma\) to a binary sum, we have
+effectively described the functor:
+%
+\[    \NatD\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{Z}    \]
+Correspondingly, we can see the injections to the sum:
+\[
+\sqr{\NatZero}:\descop{\NatD}Z \qquad
+\sqr{\NatSuc{(\Bhab{z}{Z})}}:\descop{\NatD}Z
+\]
+
+\begin{wstructure}
+<- List
+    <- Sum of nil, cons
+    <- nil case: done
+    <- cons case: product of X with leave open and done
+    -> ListD X Z = 1 + X * Z
+\end{wstructure}
+
+The pattern functor
+for lists needs but a small change:
+%
+\[\stk{
+\ListD : \Set^n \To \Desc^n \\
+\ListD \: \V{X} \mapsto
+ \DSigma{\EnumT{\sqr{ \ListNil\: \SYMBListCons }}}
+         {\sqr{ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) }}
+}\]
+%
+The $\SYMBNatSuc$ constructor becomes
+$\SYMBListCons$, taking an $\V{X}$ followed by a
+recursive argument. This code describes the following functor:
+%
+\[    \ListD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \D{\ensuremath{\times}} \V{Z}     \]
+
+\begin{wstructure}
+<- Tree
+    <- sum of leaf, node
+    <- leaf case: done
+    <- node case: product of X with two leave open and done
+    -> TreeD X Z = 1 + X * Z * Z
+\end{wstructure}
+
+Of course, we are not limited to one recursive argument. Here are
+the node-labelled binary trees:
+%
+\[\stk{
+\TreeD : \Set^n \To \Desc^n \\
+\begin{array}{@{}l@{}l}
+\TreeD \: \V{X} \mapsto 
+    \DSigma{ & \EnumT{\sqr{ \TreeLeaf\: \TreeNode }} \\}
+           { & \sqr{ \DUnit \quad
+                     (\DIndx{(\DSigma{\V{X}}{\LAM{\_}\DIndx{\DUnit}})})} }
+\end{array}
+}\]
+%
+Again, we are one evolutionary step away from $\ListD$. However,
+instead of a single call to the induction code, we add another. The
+interpretation of this code corresponds to the following functor:
+%
+\[    \TreeD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} 
+          \V{Z} \Prod \V{X}  \Prod \V{Z}     \]
+
+
+\begin{wstructure}
+<- Tagged description
+    <- Form TDesc = List (UId x Desc) [equation]
+    <- Follow usual sums-of-product presentation of datatype
+        <- Finite set of constructors
+        <- Then whatever you want
+    -> Any Desc datatype can be turned into this form
+        -> No loss of expressive power
+        /> Guarantee a ``constructor form''
+\end{wstructure}
+
+From the examples above, we observe that datatypes are defined by a
+$\SYMBDSigma$ whose first argument enumerates the constructors. We
+call codes fitting this pattern \emph{tagged} descriptions. Again,
+this is a clear reminder of the sum-of-products style. Any
+description can be forced into this style with a singleton constructor
+set. We characterise tagged descriptions thus:
+\[\stk{
+ \TagDesc^n : \Set^{n+1} \\
+ \TagDesc^n \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{\LAM{\_} \Desc^n})
+\smallskip\\
+\SYMBtoDesc : \TagDesc^n \To \Desc^n \\
+\SYMBtoDesc \mapsto
+\spl{\LAM{\V{E}}\LAM{\V{D}}
+\DSigma{\EnumT{\V{E}}}{(\F{switch}\:\V{E}\:(\LAM{\_}\Desc^n)\:\V{D})}}
+}\]
+It is not such a stretch to expect that the familiar datatype
+declaration might desugar to the \emph{definitions} of a tagged description.
+
+\begin{wstructure}
+<- Fictive object [figure 'data Desc']
+    -> Must be read as a type signature
+    -> See further for its actual implementation
+        <- Subject to our levitation exercise
+\end{wstructure}
+
+\subsection{The least fixpoint}
+\label{sec:desc-fix-point}
+
+\begin{wstructure}
+<- Build the fixpoint of functors
+    <- See examples: need to build their initial algebra
+    -> Extend the type theory with Mu/Con [figure]
+        <- Straightforward definition of a fixpoint
+            <- Interpret D with (Mu D) as sub-objects
+\end{wstructure}
+
+\newcommand{\mude}[1]{\D{\(\mu^{\!+}\)}\:#1}
+
+So far, we have built pattern functors with our \(\Desc\) universe.
+Being polynomial functors, they all admit a least fixpoint, which we
+now construct by \emph{tying the knot}: the element type abstracted
+by the functor is now instantiated recursively:
+%
+\[
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc^n}}
+     {\Gamma \vdash \Bhab{\Mu{\M{D}}}{\Set^n}} \qquad
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc^n} \quad 
+      \Gamma \vdash \Bhab{\M{d}}{\descop{\M{D}}{(\Mu{\M{D}})}}}
+     {\Gamma \vdash \Bhab{\Con{\M{d}}}{\Mu{\M{D}}}}
+\]
+Tagged descriptions are very common, so we abbreviate:
+\[
+  \mude{}:\TagDesc^n \To \Set^n \qquad \mude{\V{T}}\mapsto\Mu{(\toDesc{\V{T}})}
+\]
+
+\begin{wstructure}
+<- Elimination on Mu
+    <- We are used to foldD : \forall X. (desc D X -> X) -> mu D -> X
+        /> Not dependent
+        -> Cannot express some (which one again?) properties
+    -> Develop a dependent induction
+        <- Everywhere/All
+        <- Induction
+    -> *Generic*
+    ???
+\end{wstructure}
+
+We can now build datatypes and their elements, e.g.:
+\[\stk{
+\Nat \mapsto \Bhab{\mude{\pair{\sqr{\NatZero\: \SYMBNatSuc }}
+                               {\sqr{\DUnit \quad (\DIndx{\DUnit})}}{}}}
+                  {\Set^n}
+\\
+\Con{\sqr{\NatZero}}:\Nat \qquad
+\Con{\sqr{\NatSuc{(\Bhab{n}{\Nat})}}}:\Nat
+}\]
+
+But how shall we compute with our data?  We should expect an
+elimination principle. Following a categorical intuition, we might
+provide the `fold', or `iterator', or `catamorphism':
+%
+\[
+\F{cata} : \PITEL{\V{D}}{\Desc^n}
+           \PI{\V{T}}{\Set^n}
+           (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
+           \Mu{\V{D}} \To \V{T} 
+\]
+
+\newcommand{\SYMBind}{\F{ind}}
+
+However, iteration is inadequate for \emph{dependent} computation.
+We need \emph{induction} to write functions whose type depends on inductive
+data. Following \citet{benke:universe-generic-prog}, we adopt the following:
+%
+\[\stk{
+\F{ind} : \stk{ \PITEL{\V{D}}{\Desc^n}
+                \PI{\V{P}}{\Mu{\V{D}} \To \Set^k}         \\
+               (\PI{\V{d}}{\descop{\V{D}}{(\Mu{\V{D}})}}       
+                \All{\V{D}}{(\Mu{\V{D}})}{\V{P}}{\V{d}} \To \V{P} (\Con{\V{d}})) \To \\
+               \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
+} \\
+\F{ind}\, \V{D}\, \V{P}\, \V{m}\, (\Con{\V{d}}) \mapsto 
+    \V{m}\, \V{d}\, (\all{\V{D}}{(\Mu{\V{D}})}{\V{P}}
+                           {(\F{ind}\, \V{D}\, \V{P}\, \V{m})}
+                           {\V{d}})
+}\]
+%
+Here, $\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}$ states that
+$\Bhab{\V{P}}{\V{X} \To \Set^k}$ holds for every subobject $\V{x}:\V{X}$
+in \(\V{D}\), and \(\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}\) is a
+`dependent map', applying some
+\(\Bhab{\V{p}}{\PIS{\Bhab{\x}{\V{X}}}\V{P}\,\V{x}}\) to each \(\x\)
+contained in \(\V{d}\). The definition (including an extra case,
+introduced soon) is in
+Figure~\ref{fig:all-predicates}.\footnote{To pass the termination
+  checker, we had to inline the definition of $\SYMBall$ into
+  $\SYMBind$ in our Agda model. A simulation argument shows that the
+  definition presented here terminates if the inlined version
+  does. Hence, although not directly structural, this definition is
+  indeed terminating.} So, $\SYMBind$ is our first
+operation generic over descriptions, albeit hardwired.  Any
+datatype we define comes with induction.
+
+Note that the very same functors \(\SYMBdescop{\M{D}}\) also admit greatest
+fixpoints: we have indeed implemented coinductive types this way, but
+that is another story.
+
+\begin{figure*}
+
+\[
+\begin{array}{ll}
+%%
+\stk{
+\begin{array}{@{}ll}
+\SYMBAll : & \PITEL{\V{D}}{\Desc^n}
+             \PITEL{\V{X}}{\Set^n}
+             \PITEL{\V{P}}{\V{X} \To \Set^k} \\
+           & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+             \Set^k 
+\end{array} \\
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
+\All{\DUnit}{& \V{X}}{\V{P}}{\Void} &
+    \Unit \\
+\All{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{s}}{\V{d}}{}} &
+    \All{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{d}} \\
+\All{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{x}}{\V{d}}{}} &
+    \TIMES{\V{P}\: \V{x}}{\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}} \\
+\All{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{f}}{\V{d}}{}} &
+    \TIMES{(\PI{\V{h}}{\V{H}} \V{P}\: (\V{f}\: \V{h}))}
+          {\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}}
+\end{array}
+}
+&
+%%
+\stk{
+\begin{array}{@{}ll}
+\SYMBall : & \PITEL{\V{D}}{\Desc^n}
+             \PITEL{\V{X}}{\Set^n}
+             \PITEL{\V{P}}{\V{X} \To \Set^k} \\
+           & \PITEL{\V{p}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
+             \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+             \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
+\end{array} \\
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
+\all{\DUnit}{& \V{X}}{\V{P}}{\V{p}}{\Void} &
+    \Void \\
+\all{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{s}}{\V{d}}{}} &
+    \all{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{p}}{\V{d}} \\
+\all{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{x}}{\V{d}}{}} &
+    \pair{\V{p}\: \V{x}}
+         {\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}{} \\
+\all{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{f}}{\V{d}}{}} &
+    \pair{\LAM{\V{h}} \V{p}\: (\V{f}\: \V{h})}
+         {\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}{}
+\end{array}
+\end{array}
+}
+\]
+
+\caption{Defining and collecting inductive hypotheses}
+\label{fig:all-predicates}
+
+\end{figure*}
+
+
+\subsection{Extending type propagation}
+
+\begin{wstructure}
+<- Extending type propagation
+    <- datatype declaration turns into definitions
+        -> Straightforward translation to Desc
+        -> Creation of a variable referring to the structure
+    <- Labelled Mu
+        /> Just mention the possibility of labelling, no details required
+        -> For the user, objects have names rather than Mu of codes
+    <- Push Mu to an applied name [figure]
+        -> Direct integration into the type propagation machinery
+    -> Coded presentation is practical
+        <- The user never see a code
+\end{wstructure}
+
+
+We now have low level machinery to build and manipulate inductive
+types. Let us apply cosmetic surgery
+to reduce the syntactic overhead. We extend type checking of
+expressions:
+%
+\[
+\Rule{\Gamma\Vdash\propag{\push{\etag{c}}{\EnumT{\M{E}}}}{n} \quad
+\Gamma\Vdash  
+\propag{
+  \push{\sqr{\vec{t}}}
+   {\descop{\M{D}\: n}{(\Mu{(\DSigma{\EnumT{\M{E}}}{\M{D}})})}}}
+        {\M{t'}}}
+     {\Gamma\Vdash\propag{\push{\etag{c}\: \vec{\M{t}}}
+                   {\Mu{(\DSigma{\EnumT{\M{E}}}{\M{D}})}}}
+             {\Con{\pair{n}{\M{t'}}{}}}}
+\]
+%
+Here $\etag{c}\:\vec{t}$ denotes a tag `applied' to a sequence
+of arguments, and \(\sqr{\vec{t}}\) that sequence's repackaging as
+a right-nested tuple. Now we can just write data directly.
+\[
+\NatZero:\Nat\qquad \NatSuc{(\Bhab{n}{\Nat})}:\Nat
+\]
+Once again, the type explains the legible presentation, as well as
+the low-level representation.
+
+We may also simplify appeals to induction by type propagation, as we
+have done with functions from pairs and enumerations.
+\[
+\Rule{\Gamma\Vdash\stk{
+\propag{\push{\M{f}}
+             {\PI{\V{d}}{\descop{\M{D}}{(\Mu{\M{D}})}}       
+                \All{\M{D}}{(\Mu{\M{D}})}{(\PLAM{\x}{\Mu{\M{D}}}\M{P})}{\V{d}} \To \M{P}[\Con{\V{d}}/\x]\\}}
+       {\M{f'}}}}
+{\Gamma\Vdash
+\propag{\push{\sind{\M{f}}}
+             {\PIS{\Bhab{\x}{\Mu{\M{D}}}}\M{P} }}
+       {\F{ind}\:\M{D}\:(\PLAM{\x}{\Mu{\M{D}}}\M{P})\:\M{f'}}}
+\]
+This abbreviation is no substitute for the dependent pattern
+matching to which we are entitled in a high-level language built on top
+of this theory~\cite{goguen:pattern-matching}. It does at least make
+`assembly language' programming mercifully brief, albeit hieroglyphic.
+\[\stk{
+\F{plus}:\Nat\To\Nat\To\Nat \\
+\F{plus}\mapsto\sind{\spl{\sqr{(\LAM{\_}\LAM{\_}\LAM{\V{y}}\V{y})
+  \quad(\LAM{\_}\spl{\LAM{\V{h}}\LAM{\_}\LAM{\V{y}}
+    \NatSuc{(\V{h}\:\V{y})}})}}}
+}\]
+
+This concludes our introduction to the universe of datatype descriptions.
+We have encoded sum-of-products datatypes from the simply-typed world
+as data and equipped them with computation. We have also made sure
+to hide the details by type propagation.

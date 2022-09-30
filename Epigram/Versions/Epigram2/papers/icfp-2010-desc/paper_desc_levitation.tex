@@ -1,0 +1,723 @@
+\section{Levitating the Universe of Descriptions}
+\label{sec:desc-levitate}
+
+In this section, we will fulfil our promises and show how we implement
+the signatures, first for the enumerations, and then for the codes of
+the $\Desc^n$ universe.  Persuading these programs to perform was a perilous
+pedagogical peregrination for the protagonist.  Our method was indeed to
+hardwire constants implementing the signatures specified above, in the
+first instance, but then attempt to replace them, step by step, with
+\emph{definitions}: ``Is \(2+2\) still \(4\)?'', ``No, it's a loop!''.
+But we did find a way, so now we hope to convey to you the
+dizzy feeling of levitation, without the falling.
+
+
+
+\subsection{Implementing finite enumerations}
+
+\begin{wstructure}
+<- Recall typing rules of 1st section
+    -> Make clear they were just promises
+    -> Can be implemented now
+        <- Simply List UId
+\end{wstructure}
+
+In Section~\ref{sec:finite-sets}, we specified the
+finite sets of tags. We are going to implement (at every universe level)
+the $\EnumU$ type former and its constructors. Recall:
+%
+\[\Type{\EnumU}^n\qquad\Bhab{\NilE}{\EnumU}\qquad
+\Bhab{\ConsE{(\Bhab{\M{t}}{\UId})}{(\Bhab{\M{E}}{\EnumU})}}{\EnumU}
+\]
+%
+The $\NilE$ and $\SYMBConsE$ constructors are just the `nil' and
+`cons' or ordinary lists, with elements from \(\UId\).
+Therefore, we
+implement:
+%
+\[
+\EnumU \mapsto \Mu{(\ListD\: \UId)}
+\qquad
+\NilE \mapsto \ListNil
+\qquad
+\ConsE{\M{t}}{\M{E}} \mapsto \ListCons{\M{t}}{\M{E}}
+\]
+
+
+\begin{wstructure}
+<- Consequences
+    -> Type theory doesn't need to be extended with EnumU, NilE, and ConsE
+        <- EnumU == Mu EnumUD
+        <- NilE, ConsE are just tags
+    -> Do not need a specific \spi eliminator
+        <- \spi is an instance of the generic eliminator
+            <- Code?
+    -> Anything else remains the same (switch, EnumT, 0, 1+)
+\end{wstructure}
+
+Let us consider the consequences. We find that the type
+theory does not need a special type former $\EnumU$,
+or special constructors $\NilE$ and $\SYMBConsE$. 
+Moreover, the $\spi{\M{E}}{\M{P}}$ operator, computing tuple types
+of \(\M{P}\)s by recursion on \(\M{E}\) need not be hardwired: we can
+just use the generic $\F{ind}$ operator, as we would for any ordinary
+program.
+
+Note, however, that the universe decoder \(\EnumT{\M{E}}\) \emph{is}
+hardwired, as are the primitive \(\Ze\) and \(\Su\) that
+we use for low-level values, and indeed the \(\SYMBswitch\) operator.
+We cannot dispose of data altogether! We have, however, gained
+the ordinariness of the enumeration \emph{codes}, and hence of generic
+programs which manipulate them. Our next step is similar: we are going to
+condense the entire naming scheme of datatypes \emph{into itself}.
+
+%% Apart from these changes, we are left with implementing the other
+%% components of finite sets. This consists of $\EnumT$, $\Ze$, $\Su$, as
+%% well as the $\F{switch}$ operator. Note that the actual implementation
+%% of $\EnumU$ does not influence our implementation of $\EnumT$: be they
+%% hard-coded or codes in the $\Desc$ universe, the $\EnumU$ objects
+%% behave the same. We have witnessed this effect when carrying the
+%% operation in Epigram, moving from an hard-coded presentation to a
+%% self-hosted one. Absolutely no change to the $\EnumT$ objects was
+%% required.
+
+\begin{wstructure}
+<- Summary of the operation
+    <- The content of the type theory is exactly the same
+        <- before == after
+    /> type naming scheme condenses
+        <- Replace named constructors by codes in the universe of datatypes
+    -> Our next step is a similar move (in essence)
+        /> Condenses the entire naming scheme of datatypes
+\end{wstructure}
+
+%In this section, we have replaced a low-level presentation of finite
+%sets by a self-hosted one, expressed in the universe of
+%descriptions. However, formally, the content of the type theory
+%remains unchanged: objects that were present before the modification
+%are still there. Conversely, we have not introduced any spurious
+%object.
+
+%If not on the content, this modification had an effect on the
+%names. The type naming scheme of the type theory has condensed: named
+%type formers ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are
+%now replaced by codes and their fixpoint in the universe of
+%descriptions. In essence,
+
+\subsection{Implementing descriptions}
+
+\begin{wstructure}
+<- Realising our promises
+    <- We are going to implement Desc
+    /> Desc is itself a datatype
+        <- Same situation as EnumU
+            <- We want to benefit from generic operations
+        -> It ought to be encoded in itself
+\end{wstructure}
+
+The set of codes, $\Desc$, is already some sort of datatype; as with $\EnumU$,
+we ought to be able to describe it, coding of $\Desc^n$ in $\Desc^{n+1}$, spiralling
+upwards. Hence, this code would be a first-class citizen, born with
+the generic equipment of datatypes.
+
+\subsubsection{First attempt}
+
+\begin{wstructure}
+<- A partial implementation
+    <- '1 and 'indx are easy
+    <- 'sigma is partially doable
+        /> lack the ability to do an higher-order inductive call
+    -> Show partial code [figure]
+\end{wstructure}
+
+Our first attempt gets stuck quite quickly:
+%
+\[\stk{
+\DescD^n : \Desc^{n+1} \\
+\DescD^n \mapsto
+  \tada{\stkm{\DUnit\\ \SYMBDSigma\\ \SYMBDIndx}}
+       {\stkm{ \DUnit                                \\
+         \DSigma{\Set^n}{\LAM{\V{S}} \SHED}      \\
+         \DIndx{\DUnit}    }                    } \\
+%\begin{array}{@{}ll}
+%\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!} ]})  \\
+%                               & \left[\begin{array}{l}
+%                                   \DUnit                                \\
+%                                   \DSigma{\Set}{\LAM{\V{S}} \SHED}      \\
+%                                   \DIndx{\DUnit}                        \\
+%                                 \end{array}
+%                                 \right]
+%\end{array}
+}\]
+%
+Let us explain where we stand. Much as
+we have done so far, we first offer a constructor choice from
+$\DUnit$, $\SYMBDSigma$, and $\SYMBDIndx$. You may notice
+that the `tagged' notation we have used for the $\Desc^n$ constructors now
+fits the facts: these were actually the tags we are defining.
+For $\DUnit$, we immediately reach the end of the description. For
+$\SYMBDIndx$, there is a single recursive argument. Describing
+$\SYMBDSigma$ is problematic. Recall the specification of
+$\SYMBDSigma$:
+%
+\[
+\DSigma{(\Bhab{\V{S}}{\Set^n})}{(\Bhab{\V{D}}{\V{S} \To \Desc^n})} : \Desc^n\\
+\]
+%
+So, we first pack a  $\Set^n$, $\V{S}$, as well we might when working in
+$\Desc^{n+1}$. We should then like
+a recursive argument \emph{indexed} by $\V{S}$, but
+that is an \emph{exponential}, and our presentation so far delivers only
+sums-of-products. To code our universe, we must first enlarge it!
+
+
+\subsubsection{Second attempt}
+
+\begin{wstructure}
+<- Extending the universe of description
+    -> With higher-order induction
+    <- Intuition: index elements in X by H, and go on reading
+        -> indx is isomorph to hindx for H = 1
+    /> Keep indx
+        <- First order!
+        -> Extensionally equal to hindx 1
+        /> Practically, definitional equality on Sigma/Pi cannot cope with it
+    -> Show DescD code
+\end{wstructure}
+
+In order to capture a notion of higher-order induction, we add a code
+$\SYMBDHindx$ that takes an indexing set $\V{H}$. This amounts to give
+a recursive subobject for each element of $H$.
+%
+\[\stk{
+    \DHindx{(\Bhab{\M{H}}{\Set^n})}{(\Bhab{\M{D}}{\Desc^n})} : \Desc^n
+    \smallskip \\
+    \descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     
+        \mapsto 
+            \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} \\
+}\]
+
+
+Note that up to isomorphism, $\SYMBDIndx$ is subsumed by
+$\DHindx{\Unit}{\!}$. However, the apparent duplication has some
+value.  Unlike its counterpart, $\SYMBDIndx$ is first-order: we prefer
+not to demand dummy functions from \(\Unit\) in ordinary data,
+e.g. \(\NatSuc{(\LAM{\_}n)}\). It is na{\"\i}ve to imagine that up to
+isomorphism, any representation of data will do.  First-order
+representations are finitary by construction, and thus admit a richer,
+componentwise decidable equality than functions may in
+general possess.\footnote{E.g., extensionally, there is one function in
+\(\EnumT{\void}\To\Nat\); intensionally, there is a countable infinitude
+which it is dangerous to identify definitionally.}
+
+We are now able to describe our universe of datatypes:
+%
+\[\stk{
+\DescD^n : \Desc^{n+1} \\
+\DescD^n \mapsto\tada
+{\stkm{ \DUnit\\ \SYMBDSigma\\ \SYMBDIndx\\ \SYMBDHindx}}
+{\stkm{
+\DUnit                                            \\
+                                   \DSigma{\Set^n}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
+                                   \DIndx{\DUnit}                                    \\
+                                   \DSigma{\Set^n}{\LAM{\_} \DIndx{\DUnit}}
+}}
+}\]
+%
+The $\DUnit$ and $\SYMBDIndx$ cases remain unchanged, as expected. We
+successfully describe the $\SYMBDSigma$ case via
+the higher-order induction, branching on $\V{S}$. The $\SYMBDHindx$ case
+just packs a $\Set^n$ with a recursive argument.
+
+At a first glance, we have achieved our goal. We have described the
+codes of the universe of descriptions. The fixpoint of \(\descop{\DescD^n}\)
+is a datatype just like $\Desc^n$, in $\Set^{n+1}$. Might we be
+so bold as to take \(\Desc^n \mapsto \Mu{\DescD^n}\) as the levitating
+definition? If we do, we shall come down with a bump! 
+To complete our levitation, just as in the magic trick, requires
+hidden assistance. Let us explain the problem and reveal the `invisible
+cable' which fixes it.
+
+\subsubsection{Final move}
+
+\begin{wstructure}
+<- Subtlety: translation of [ ... ]
+    -> Let us do it manually
+        -> Code with problem for the motive of switch
+\end{wstructure}
+
+The definition \(\Desc^n \mapsto \Mu{\DescD^n}\) is circular,
+but the offensive recursion is concealed by a prestidigitation.
+
+Expanding \(\toDesc{-}\) and propagating types as in
+Figure~\ref{fig:type-checking} reveals the
+awful truth:
+\[
+\Desc^n\mapsto
+\Mu{\stk{(\DSigma{\EnumT{\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}}\\}
+    {\;\SYMBswitch\:\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}\:(\LAM{\_}\Desc^{n+1})\\
+\;\sqr{\stkm{
+\DUnit                                            \\
+                                   \DSigma{\Set^n}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
+                                   \DIndx{\DUnit}                                    \\
+                                   \DSigma{\Set^n}{\LAM{\_} \DIndx{\DUnit}}
+}}})}}
+\]
+The recursion shows up only because we must specify the return type
+of the general-purpose \(\F{switch}\), and it is computing a \(\Desc^{n+1}\)!
+Although type propagation
+allows us to hide this detail \emph{when defining a function}, we cannot
+readily suppress this information and check types
+when \(\F{switch}\) is fully applied.
+
+\begin{wstructure}
+<- The magician trick
+    <- Our problem is to give a motive for switch
+        /> We perfectly know what it ought to be: \_ -> DescD
+    -> Solution: extend the type theory with a special purpose switchD
+        -> Only extension required to the type theory!
+        -> Hidden away to the user by the syntactic sugar
+            -> Sufficient to ensure unavailability as a raw operator
+            <- Another instance of type propagation
+\end{wstructure}
+
+%What happens if we unfold the definition? We ought to build the following term:
+%
+%\[
+%\PLAM{\V{x}}{(\EnumT{\V{E}})} \switch{\V{E}}{(\LAM{\_} %\Mu{\DescD})}{\V{\pi^f}}{\V{x}}
+%\]
+%
+%But this is quite problematic. We are still in the process of
+%constructing $\DescD$, and the motive of $\F{switch}$ is abruptly
+%begging for this very same $\DescD$. Despite our willingness, we
+%cannot materialise such motive. However, we perfectly know what the
+%motive is.
+
+We are too close to give up now. If only we did not need to
+supply that return type, especially when we know what it must be!
+We eliminate the recursion by \emph{specialising} \(\F{switch}\):
+%
+\[
+\F{switchD} : \PITEL{\V{E}}{\EnumU}   \To
+                (\spi{\V{E}}{\LAM{\_} \Desc^m}) \To
+                \EnumT{\V{E}} \To \Desc^m
+\]
+%
+The magician's art rests here, in this extension. We conceal it
+behind a type propagation rule for \(\F{switchD}\) which we apply
+with higher priority than for \(\F{switch}\) in general.
+%
+\[
+\Rule{\Gamma \Vdash
+  \propag{\push{\sqr{\vec{t}}}{\spi{\M{E}}{\PLAM{x}{\EnumT{E}}\Desc^m}}}
+                           {\M{t'}}}
+     {\Gamma \Vdash
+\propag{\push{\sqr{\vec{t}}}{\EnumT{\M{E}}\To\Desc^m}}
+ {\switchD{\M{E}}{\M{t'}}}}
+\]
+As a consequence, our definition above now propagates without
+introducing recursion. Of course, by pasting together the declaration
+of \(\Desc^n\) and its internal copy, we have made it appear in its own
+type. Hardwired as a trusted \emph{fait accompli}, this creates no regress,
+although one must assume the definition to recheck it.
+
+Our Agda model does not formalise the $\SYMBswitchD$
+construction. Instead, we exhibit the isomorphism between declared
+and encoded descriptions. Here, $\SYMBswitchD$ lets us collapse
+this isomorphism, operationally identifying defined and coded
+descriptions.
+
+There are other ways to achieve a sufficient specialisation to avoid a
+recursive code, e.g., extending $\Desc^n$ with specialised codes for
+\emph{finite} sums and products, pushing the $\SYMBswitch$ into the
+interpretation of codes, rather than the code itself. Here, we prefer
+not to add codes to $\Desc^n$ which are otherwise unmotivated.
+%%
+%\[\stk{
+%    \Dsigma{(\Bhab{\V{E}}{\EnumU})}
+%           {(\Bhab{\V{B}}{\spi{\V{E}}{\LAM{\_}{\Desc^n}}})} : \Desc^n
+%    \smallskip \\
+%    \descop{\Dsigma{\V{E}}{\V{B}}}{\V{X}}     
+%        \mapsto 
+%            \SIGMAS{\Bhab{\V{x}}{\EnumT{\V{E}}}}
+%                   %{\descop{\switch{\V{E}}{(\LAM{\_}{\Desc})}{\V{B}}{\V{x}}}{\V{X}}}    
+%}\]
+%%
+%Using $\SYMBDsigma$ to switch over the $\Desc$ constructors, we avoid
+%mention of $\Desc$ while levitating it. The $\SYMBswitch$ operator is
+%pushed into the interpretation function, at which point $\Desc$ indeed
+%exists.
+
+%% * There exists alternative
+%% **   <- All we want is to avoid mention of Desc
+%% **   -> Add a code for finite sigma : $\sigma : (e : \EnumU) -> \pi e \Desc -> \Desc$
+%% **       <- Take a finite set in argument
+%% **       <- Interpreted as a switch
+%% **       -> No more need to mention Desc during its construction
+%% **           <- Pushed into intrepretation, at which time it exists
+
+\begin{wstructure}
+<- Generic programming now!
+    <- Desc is just data
+        -> Can be manipulated
+    <- Free induction scheme on Desc
+        -> Ability to inspect datatypes
+        -> Ability to program on datatypes
+\end{wstructure}
+
+
+We have levitated \(\Desc\) at every level. Beyond its pedagogical
+value, this exercise has several practical outcomes. First, it
+confirms that each $\Desc$ universe is just plain data. As any piece of
+data, it can therefore be inspected and manipulated. Moreover, it is
+expressed in a $\Desc$ universe. As a consequence, it is equipped,
+for free, with an induction principle. So, our ability to inspect and
+program with $\Desc$ is not restricted to a meta-language: we have
+the necessary equipment to program with \emph{data}, so we can program over
+datatypes. \emph{Generic programming is just programming}.
+
+
+\subsection{The generic catamorphism}
+
+\begin{wstructure}
+<- Making cata
+    <- Present the type signature
+    <- Starts with a call to generic induction
+        <- induction on Desc!
+        /> Show types at hand
+        -> Explain how to use inductive hypothesis
+    <- Implement the 'replace' function
+    -> Dependent-typeless catamorphism 
+\end{wstructure}
+
+In Section~\ref{sec:desc-fix-point}, we hardwired a dependent
+$\F{ind}$uction principle, but sometimes,
+iteration suffices. Let us construct the catamorphism.
+
+\newcommand{\cata}{\F{cata}}
+
+We proceed by induction on the \emph{data} in \(\Mu{\V{D}}\):
+the non-dependent return type $\V{T}$ is readily propagated.
+Given a node $\V{xs}$
+and the induction hypotheses, the method ought to build an element of
+$\V{T}$. Provided that we know how to make an element of
+$\descop{\V{D}}{\V{T}}$, this step will be performed by the algebra
+$\V{f}$. Let us take a look at this jigsaw:
+%
+\[\stk{
+\cata : \PITEL{\V{D}}{\Desc}
+           \PI{\V{T}}{\Set}
+           (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
+           \Mu{\V{D}} \To \V{T} \\
+\cata\: \V{D}\: \V{T}\: \V{f} \mapsto
+  \sind \LAM{\V{xs}}\LAM{\V{hs}} \V{f}\: \SHED
+}\]
+% 
+The hole remains: we have
+\(\Bhab{\V{xs}}{\descop{\V{D}}{\Mu{\V{D}}}}\) and
+\(\Bhab{\V{hs}}{\All{\V{D}}{\Mu{\V{D}}}{(\LAM{\_} \V{T})}{\V{xs}}}\)
+to hand, and we need a \(\descop{\V{D}}{\V{T}}\).
+Now, $\V{xs}$ has the right shape, but its
+components have the wrong type. However, for each such
+component, $\V{hs}$ holds the corresponding value
+in $\V{T}$.  We need a function to \(\F{replace}\) the former with the latter:
+this pattern
+matching sketch yields an induction on \(\V{D}\). We fill the hole
+with \(\F{replace}\: \V{D}\:(\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\).
+%
+\[\stk{
+\F{replace} : \stk{\PITEL{\V{D}}{\Desc}
+                   \PITEL{\V{X},\V{Y}}{\Set}\\
+                   \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+                   \All{\V{D}}{\V{X}}{(\LAM{\_}\V{Y})}{\V{xs}} \To
+                   \descop{\V{D}}{\V{Y}}} \\
+\begin{array}{@{}l@{\:}l@{\:}l@{\:\:\mapsto\:\:}l}
+\F{replace}\: \DUnit &          \V{X}\: \V{Y}\: \Void&          \Void   &
+    \Void  \\
+\F{replace}\: (\DSigma{\V{S}}{\V{D}})& \V{X}\: \V{Y}\: \pair{\V{s}}{\V{d}}{}& \V{d'}  &
+    \pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{} \\
+\F{replace}\: (\DIndx{\V{D}})&     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{d}}{}& \pair{\V{y}}{\V{d'}}{} &
+    \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{} \\
+\F{replace}\: (\DHindx{\V{H}}{\V{D}})& \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d}}{}& \pair{\V{g}}{\V{d'}}{} &
+ \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}
+\end{array}
+}\]
+%
+
+%% The astute reader will have been struck by the type of $\F{replace}$:
+%% it is \emph{almost} the morphism part -- sometimes called \emph{map}
+%% -- of the functor $\V{D}$ from $\V{X}$ to $\V{Y}$ in $\Set$. Just as
+%% the $\F{induction}$ is the dependent version of $\cata$, $\F{replace}$
+%% is the dependent version of the map, which uses the induction
+%% hypotheses. For space reason, we will not present the non-dependent
+%% map. It can be found in the Agda model.
+
+\begin{wstructure}
+<- Deriving generic functions
+    <- Taking a Desc and computing a function
+        <- Desc comes equipped with an induction principle
+        -> Ability to compute more functions from it
+            -> More generic functions
+    <- Inspecting datatypes
+        <- All described byu a Desc code
+        -> Ability to explore the code
+            <- Desc equipped with an induction principle
+            -> Build new objects based on that structure
+\end{wstructure}
+
+We have shown how to derive a generic
+operation, \(\cata\), from a pre-existing generic operation,
+\(\F{ind}\), by
+manipulating descriptions as data: the catamorphism is just a
+function taking each $\Desc$ value to a datatype specific
+operation. This is polytypic programming, as in
+PolyP~\cite{jansson:polyp}, made ordinary.
+
+%% Moreover, the $\F{replace}$ function demonstrates the benefit of an
+%% approach based on universes. The datatypes living in the universe of
+%% descriptions, we are able to \emph{inspect} them. As shown by
+%% $\F{replace}$, it is easy to explore these structures, as well as
+%% building new ones.
+
+\subsection{The generic free monad}
+\label{sec:desc-free-monad}
+
+\begin{wstructure}
+<- A generic program: the free monad construction
+    <- Recall free monad construction in Haskell
+        -> Based on a functor F
+    <- Note that the free monad construction is itself defined by a functor
+        -> Extract it
+\end{wstructure}
+
+In this section, we try a more ambitious generic operation. Given a
+functor---a signature of operations represented as a tagged
+description---we build its free monad, extending the signature with
+variables and substitution.
+%
+\newcommand{\FMFreeMonad}{\D{FreeMonad}}
+\newcommand{\FMFreeMonadD}{\D{FreeMonadD}}
+\newcommand{\FMVar}{\C{Var}}
+\newcommand{\FMComposite}{\C{Composite}}
+%
+Let us recall this construction in, say, Haskell. Given a
+functor \texttt{f}, the free monad over \texttt{f} is given
+thus:
+%
+\[
+\texttt{data FreeMonad f x = Var x | Op (f (FreeMonad f x))}
+\]
+%
+Provided \texttt{f} is an instance of \texttt{Functor}, we may
+take \texttt{Var} for \texttt{return} and use \texttt{f}'s
+\texttt{fmap} to define \texttt{>>=} as substitution.
+
+Being an inductive type, $\FMFreeMonad$ arises
+by a pattern functor:
+%
+\[
+\FMFreeMonadD\: \V{F}\: \V{X}\: \V{Z} \mapsto \V{X} \mathop{\D{+}} \V{F}\:\V{Z}
+\]
+
+\begin{wstructure}
+    <- Encode it in the Desc world [equation]
+        <- F is the Desc we start with
+        <- The free monad functor is what we have just defined
+        <- [\_]* : Desc -> Set -> Desc
+           [\_]* D X = 'cons ['var ('sigma X (\_ -> '1))] D
+        -> Mu does the fixpoint
+\end{wstructure}
+
+Our construction takes the functor as a
+tagged description, and given a set $\V{X}$ of variables, computes the
+tagged description of the free monad pattern functor.
+%
+\[\stk{
+\FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
+\FreeMonad{\pair{\V{E}}{\V{D}}{}}\:\V{X} \mapsto
+    \pair{\pair{\DVar{}}{\V{E}}{}}
+         {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
+}\]
+%
+We simply add a constructor, $\SYMBDVar$, making its arguments
+$\DSigma{\V{X}}{\DUnit}$---just an element of $\V{X}$. 
+$\V{E}$ and $\V{D}$ stay put, leaving the other constructors
+unchanged. Unfolding the interpretation of this definition, we
+find an extended sum, corresponding to the \(\V{X}\D{+}\) in
+$\FMFreeMonadD$. Taking the fixpoint ties the knot and we have our
+data.
+
+\begin{wstructure}
+<- A generic program: monadic substitution [equation]
+    <- subst : \forall T X Y. mu ([T]* X) -> (X -> mu ([T]* Y)) -> mu ([T]* Y)
+        -> Using Fold
+\end{wstructure}
+
+\newcommand{\subst}{\F{subst}}
+\newcommand{\apply}{\F{apply}}
+
+Now we need the operations. As expected, \(\LAM{\x}\DVar{\x}\)
+plays the r\^ole of \return, making variables terms. Meanwhile,
+\bind is indeed \emph{substitution}, which we now
+implement generically, making use of $\cata$. Let us write the type,
+and start filling in the blanks:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\subst : & \PITEL{\V{D}}{\TagDesc}
+           \PI{\V{X}, \V{Y}}{\Set} 
+           (\V{X} \To \mude{(\FreeMonad{\V{D}}{\V{Y}})}) \To \\
+         & \mude{(\FreeMonad{\V{D}}{\V{X}})} \To
+           \mude{(\FreeMonad{\V{D}}{\V{Y}})} 
+\end{array} \\
+\subst\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma} \mapsto
+  \cata\: (\toDesc{(\FreeMonad{\V{D}}{\V{X}})})\: 
+          (\mude{(\FreeMonad{\V{D}}{\V{Y}})})\: 
+          \SHED
+}\]
+%
+We are left with implementing the algebra of the catamorphism. Its
+role is to catch appearances of $\DVar{\V{x}}$ and replace them by
+$\V{\sigma}\: \V{x}$. This corresponds to the following definition:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\apply : & \PITEL{\V{D}}{\TagDesc} 
+           \PI{\V{X}, \V{Y}}{\Set} 
+           (\V{X} \To \mude{(\FreeMonad{\V{D}}{\V{Y}})}) \To \\
+         & \descop{\toDesc{(\FreeMonad{\V{D}}{\V{X}})}}{(\mude{(\FreeMonad{\V{D}}{\V{Y}})})}
+           \To  \mude{(\FreeMonad{\V{D}}{\V{Y}})}
+\\
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \sqr{\DVar{\V{x}}}   & \V{\sigma}\: \V{x}                   \\
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\V{c}}{\V{xs}}{} & \Con{\pair{\V{c}}{\V{xs}}{}}
+\end{array}
+}\]
+
+\begin{wstructure}
+    -> Consequences
+        <- We have free monad datatype
+            <- Term + variables
+        <- We have monad operations
+            <- Return / var
+            <- Substitution / bind
+\end{wstructure}
+
+We complete the hole with $\apply\: \V{D}\: \V{X}\: \V{Y}\:
+\V{\sigma}$. Every tagged
+description can be seen as a signature of operations: we can uniformly
+add a notion of variable, building a new type from an old one, then
+providing the substitution structure.
+
+\begin{wstructure}
+<- Deriving new data-structure and functions on them
+    <- Computing the Free Monad of a datatype
+        <- Derive new data-structure from previous one
+            <- It is just code
+        /> New data-structure comes with some equipment
+    <- Computing new functions on computed datatypes
+        <- If data comes with structure, we ought to be able to capture it
+            <- Induction on Desc
+            -> Ability to compute over data
+\end{wstructure}
+
+%% Candidate for removal:
+%% With the free monad construction, we have seen two kinds of generic
+%% operations. Firstly, we have derived a new data-structure from another
+%% one: we make the free monad from its underlying functor. To do so, we
+%% crucially rely on the fact that datatypes are nothing but codes. We
+%% are therefore entitled to modify this code and, in this case, extend
+%% it. Extending a datatype might give rise to a more structured object,
+%% as was the case here.  So, secondly, we have equipped this new
+%% datatype with its inherent structure: the \bind\ and
+%% \return\ operations. We have been able to build them as generic
+%% functions.
+
+\subsection{Skyhooks all the way up?}
+
+%% * Desc in Desc
+%% ** /> Blur the lines between implementation and reflection
+%% ** /> Abusing the paradoxical nature of Set : Set
+
+In this section, we have seen how to \emph{levitate}
+descriptions. Although our theory, as presented here, takes
+$\Bhab{\Set}{\Set}$, our annotations indicate how a stratified theory
+could code each level from above.  We do not rely on the paradoxical
+nature of $\Bhab{\Set}{\Set}$ to flatten the hierarchy of descriptions
+and fit large inside small.  We shall now be more precise about what
+we have done.
+
+%% * Summary 
+%% ** <- What is the equipment for making data-types
+%% ** <- What is reflected, what is implemented
+%% ** <- (table 1)
+
+Let us first clarify the status of the implementation. The kit for
+making datatypes is presented in Table~\ref{tab:sumup-operators}. For
+each operation, we describe its role and its status, making clear
+which components are self-described and which ones are actually
+implemented.
+
+%% * Paradox
+%% ** <- How do we bottom out in a stratified setting?
+%% ** <- Spiral
+%% ***    <- Encoding of DescD_n : Desc_{n+1}
+%% ***    <- Desc_n = Mu DescD_n : Set_{n+1}
+%% ** <- Agda model: Desc_42
+%% ***    <- No dependent pattern-matching
+%% ***    <- No IR
+%% ***    <- Normal universes
+%% ***    -> Straight Agda (UTT)
+%% ** <- ``Self-encoding'' only in a level polymorphic sense
+%% ***    -> Agda model: set poly
+
+In a stratified system, the `self-encoded' nature of $\Desc$ appears
+only in a set polymorphic sense: the principal type of the encoded
+description generalises to the type of $\Desc$ itself. We encode this
+much in our set polymorphic model in Agda and in our Coq model,
+crucially relying on typical ambiguity~\cite{harper:implicit-universe}.
+We step outside current technology only to replace the declared $\Desc$
+with its encoding.
+
+Even this last step, we can approximate within a standard predicative
+hierarchy. Fix a top level, perhaps \(42\). We may start by declaring
+$\Desc^{42}:\Set^{43}$. We can then construct $\DescD^{41}:\Desc^{42}$
+and thus acquire an encoded $\Desc^{41}$. Although $\Desc^{41}$ is
+encoded, not declared, it includes the relevant descriptions,
+including $\DescD^{40}$. We can thus build the tower of descriptions
+down to $\Desc^0$, encoding every level below the top.  Description of
+descriptions forms a `spiral', rather than a circle. We have modelled
+this process exactly in Agda, without any appeal to dependent
+pattern matching, induction-recursion, or set polymorphism. All it
+takes to build such a sawn-off model of encodings is inductive
+definition and a cumulative predicative hierarchy of set levels.
+
+\begin{table}
+
+{
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Object                & Role                        & Status \\
+\hline
+\hline
+$\EnumU$              & Build finite sets           & Levitated \\
+\hline
+$\Desc$               & Describe pattern functors   & Levitated \\
+\hline
+$\SYMBdescop{\_}$     & Interpret descriptions      & Hardwired \\
+\hline
+$\SYMBMu$, $\SYMBCon$ & Define, inhabit fixpoints   & Hardwired \\
+\hline
+$\SYMBind$, $\SYMBAll$, $\SYMBall$  
+                      & Induction principle         & Hardwired \\
+\hline
+\end{tabular}
+\end{center}
+}
+
+\caption{Summary of constructions on Descriptions}
+\label{tab:sumup-operators}
+
+\end{table}

@@ -1,0 +1,652 @@
+
+\section{The Type Theory}
+\label{sec:type-theory}
+
+One challenge in writing this paper is to extricate our account of datatypes from what else is new in Epigram 2. In fact, we demand relatively little from the setup, so we shall start with a `vanilla' theory and add just what we need. The reader accustomed to dependent types will recognise the basis of her favourite system; for those less familiar, we try to keep the presentation self-contained.
+
+\subsection{Base theory}
+
+\begin{wstructure}
+<- Presentation of the formalism
+    <- Standard presentation
+        -> No novelty here
+    <- 3 judgments [equation]
+        -> Context validity
+        -> Typing judgements
+        -> Equality judgements
+\end{wstructure}
+
+We adopt a traditional presentation for our type
+theory, with three mutually defined systems of judgments:
+\emph{context validity}, \emph{typing}, and \emph{equality},
+with the following forms:
+%
+\[
+\begin{array}{ll}
+\G \vdash \Valid                & \mbox{\(\G\) is a valid context, giving types to variables} \\
+\G \vdash \Bhab{\M{t}}{\M{T}}           & \mbox{term \(\M{t}\) has type \(\M{T}\) in context \(\G\)} \\
+\G \vdash \Bhab{\M{s} \equiv \M{t}}{\M{T}}  & \mbox{\(\M{s}\) and \(\M{t}\) are equal at type \(\M{T}\) in context \(\G\)} \\
+\end{array}
+\]
+
+\begin{wstructure}
+    <- Invariants [equation]
+        -> By induction on derivations
+\end{wstructure}
+
+The rules are formulated to ensure that the
+following `sanity checks' hold by induction on derivations
+%
+\[
+\begin{array}{l@{\;\Rightarrow\;\;}l}
+\G            \vdash \Bhab{\M{t}}{\M{T}}            
+    & \G \vdash \Valid\; \wedge\; \G\vdash\Type{\M{T}} \\
+\G            \vdash s \equiv \Bhab{\M{t}}{\M{T}}   
+    & \G \vdash \Bhab{s}{T} \;\wedge\; \G\vdash \Bhab{\M{t}}{\M{T}}
+\end{array} \]
+%
+and that judgments \(\M{J}\) are preserved by well-typed instantiation.
+%
+\[
+\G ; \xS ; \Delta \vdash \M{J}            \;\Rightarrow\;      
+    \G \vdash \Bhab{\M{s}}{\M{S}} \;\Rightarrow\; 
+          \G ; \Delta[\M{s}/\x] \vdash \M{J}[\M{s}/\x] 
+\]
+
+%We are not going to prove the validity of these invariants. They
+%follow rather straightforwardly from the induction rules. For formal
+%proofs, we refer the reader to standard presentations of type theory,
+%such as Luo's seminal work \cite{luo:utt}.
+
+\begin{wstructure}
+    <- Judgemental equality
+        <- Presentation independent of particular implementation choice
+        -> Model in Agda, intensional
+        -> Used in Epigram, OTT
+\end{wstructure}
+
+We specify equality as a judgment, leaving open the details of its implementation, requiring only a congruence including ordinary computation (\(\beta\)-rules), decided, e.g., by testing \(\alpha\)-equivalence of \(\beta\)-normal forms~\cite{DBLP:journals/jfp/Adams06}. Coquand and Abel feature prominently in a literature of richer equalities, involving \(\eta\)-expansion, proof-irrelevance and other attractions~\cite{DBLP:journals/scp/Coquand96,DBLP:conf/tlca/AbelCP09}. Agda and Epigram 2 support such features, Coq currently does not, but they are surplus to requirements here.
+
+% Therefore, we are not tied to a particular implementation
+%choice. In particular, our system has been modelled in Agda, which
+%features an intensional equality. On the other hand, it is used in
+%Epigram, whose equality has a slightly extensional
+%flavor~\cite{altenkirch:ott}. We expect users of fully extensional
+%systems to also find their way through this presentation.
+
+\begin{wstructure}
+<- Context validity [figure no longer]
+    <- Not much to be said
+\end{wstructure}
+
+Context validity ensures that variables inhabit well-formed
+sets.
+%
+\[
+%% Empty context validity
+\Axiom{\vdash \Valid}
+\qquad
+%% Extend context
+\Rule{\G       \vdash \Type{\M{S}}}
+     {\G ; \xS \vdash \Valid}\;\x\not\in\G
+\]
+%
+\begin{wstructure}
+<- Typing judgements [figure]
+    <- Set in Set
+        -> For simplicity of presentation
+        -> Assume that a valid stratification can be inferred
+            <- Harper-Pollack, Luo, Courant
+        -> See later discussion
+    <- Standard presentation of Pi and Sigma types
+\end{wstructure}
+%
+The basic typing rules
+% (Fig.~\ref{fig:typing-judgements})
+for tuples and functions are also standard, save that we locally adopt
+\(\Set:\Set\) for presentational purposes. Usual techniques to resolve
+this \emph{typical ambiguity} apply~\cite{harper:implicit-universe,
+  luo:utt, courant:explicit-universe}. A formal treatment of
+stratification for our system is a matter of
+ongoing work.
+%%  putting presentation before paradox~\cite{girard:set-in-set}.
+%% The usual remedies apply, \emph{stratifying}
+%% \(\Set\)~\cite{harper:implicit-universe, luo:utt,
+%%   courant:explicit-universe}.
+%%
+\input{figure_typing_judgements}
+
+\paragraph{Notation.} We subscript information needed for type synthesis
+but not type checking, e.g., the domain of a \(\LAMBINDER\)-abstraction,
+and suppress it informally where clear. Square brackets denote tuples,
+with a LISP-like right-nesting convention: \(\sqr{a\;b}\) abbreviates
+\(\pair{a}{\pair{b}{\void}{}}{}\).
+
+%We recognise the standard presentation of $\Pi$ and $\Sigma$
+%types, respectively inhabited by lambda terms and dependent
+%pairs. Naturally, there are rules for function application and
+%projections of $\Sigma$-types. Equal types can be substituted, thanks
+%to the conversion rule.
+
+%For the sake of presentation, we postulate a $\Set$ in $\Set$
+%rule. Having this rule makes our type theory inconsistent, by Girard's
+%paradox~\cite{girard:set-in-set}. However, it has been
+%shown~\cite{harper:implicit-universe, luo:utt,
+%  courant:explicit-universe} that a valid stratification can be
+%inferred, automatically or semi-automatically. In the remaining of our
+%presentation, we will assume that such a stratification exists, even
+%though we will keep it implicit. We shall discuss this assumption in
+%Section~\ref{sec:discussion}.
+
+%\begin{figure}
+%
+%\input{figure_typing_judgements}
+%
+%\caption{Typing judgements}
+%\label{fig:typing-judgements}
+%
+%\end{figure}
+
+
+\begin{wstructure}
+<- Judgemental equality [figure]
+    <- symmetry, reflexivity, and transitivity
+    <- beta-rules for lambda and pair
+    <- xi-rule for functions
+    -> Agnostic in the notion of equality
+        <- Doesn't rely on a ``propositional'' equality
+        -> Key: wide applicability of our proposal
+\end{wstructure}
+
+The judgmental equality comprises the computational rules below,
+closed under reflexivity,
+symmetry, transitivity and structural congruence, even under binders.
+We omit the mundane rules which ensure these closure properties for
+reasons of space.
+\input{figure_judgemental_equality}
+Given a suitable stratification of \(\Set\), the
+computation rules yield a terminating evaluation procedure, ensuring
+the decidability of equality and thence type checking.
+
+%Finally, we define the rules governing judgemental equality in
+%Figure~\ref{fig:judgemental-equality}. We implicitly assume that
+%judgemental equality respects symmetry, reflexivity, and
+%transitivity. We capture the computational behavior of the language
+%through the $\beta$-rules for function application and pairs. Finally,
+%we implicitly assume that it respects purely syntactic and structural
+%equality. This includes equality under lambda ($\xi$-rule).
+
+%Crucially, being judgemental, this presentation is agnostic in the
+%notion of equality actually implemented. Indeed, our typing and
+%equality judgements do not rely on a ``propositional'' equality. This
+%freedom is a key point in favour of the wide applicability of our
+%proposal. This judgemental presentation must be read as a
+%\emph{specification}: our proposal works with any propositional
+%equality satisfying this specification. Moreover, our lightweight
+%requirements do not endanger decidability of equality-checking.
+%Obviously, when implementing our technology in an existing
+%type-theory, some opportunities arise. We will present some of them
+%along the course of the paper.
+
+
+%\begin{figure}
+
+%\input{figure_judgemental_equality}
+%
+%\caption{Judgemental equality}
+%\label{fig:judgemental-equality}
+%
+%\end{figure}
+
+
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Meta-theoretical properties
+    <- Assuming a stratified discipline
+    <> The point here is to reassert that dependent types are not evil, 
+       there is no non-terminating type-checker, or such horrible lies <>
+    -> Strongly normalising
+        -> Every program terminates
+    -> Type-checking terminates
+    ???
+\end{wstructure}
+
+
+%This completes our presentation of the type theory. Assuming a
+%stratified discipline of universe, the system we have described enjoy
+%some very strong meta-theoretical properties. Unlike simply typed
+%languages, such as Haskell, dependently-typed systems are
+%\emph{strongly normalising}: every program that type-checks
+%terminates. Moreover, type-checking is decidable and can therefore be
+%implemented by a terminating algorithm.
+%\note{Need some care here. Expansion would be good too. I wanted to
+%  carry the intuition that we are not the bad guys with a
+%  non-terminating type-checker.}
+
+\subsection{Finite enumerations of tags}
+\label{sec:finite-sets}
+
+\begin{wstructure}
+<- Motivation
+    <- Finite sets could be encoded with Unit and Bool
+        /> Hinder the ability to name things
+    <- W-types considered harmful?
+        ???
+    -> For convenience
+        <- Named elements
+        <- Referring by name instead of code
+        -> Types as coding presentation
+            /> Also as coding representation!
+\end{wstructure}
+
+It is time for our first example of a \emph{universe}. You might
+want to offer a choice of named constructors in your datatypes: we shall
+equip you with sets of tags to choose from. Our plan
+is to implement (by extending the theory, or by encoding) the signature
+%
+\[
+  \Type{\EnumU}\qquad \Type{\EnumT{(\Bhab{\M{E}}{\EnumU})}}
+\]
+%
+where some value \(E:\EnumU\) in the `enumeration universe' describes
+a type of tag choices \(\EnumT{E}\). We shall need
+some tags---valid identifiers, marked to indicate that
+they are data, not variables scoped and substitutable---so we hardwire these
+rules:
+%
+\[
+%% UId
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\UId}}
+\qquad
+%% Tag
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Tag{\V{s}}}{\UId}}\;\V{s}\: \mbox{a valid identifier}
+\]
+%
+Let us describe enumerations as lists of tags, with signature:
+%
+\[
+\Bhab{\NilE}{\EnumU}\qquad
+\Bhab{\ConsE{(\Bhab{\M{t}}{\UId})}{(\Bhab{\M{E}}{\EnumU})}}{\EnumU}
+\]
+%
+What are the \emph{values} in \(\EnumT{E}\)? Formally, we represent
+the choice of a tag as a numerical index into \(E\), via new rules:
+%
+\[
+%% Ze
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Ze}{\EnumT{(\ConsE{\M{t}}{\M{E}})}}} 
+\qquad
+%% Su
+\Rule{\Gamma \vdash \Bhab{\M{n}}{\EnumT{\M{E}}}}
+     {\Gamma \vdash \Bhab{\Su{\M{n}}}{\EnumT{(\ConsE{\M{t}}{\M{E}})}}}
+\]
+%
+However, we expect that in practice, you might rather refer to these
+values \emph{by tag}, and we shall ensure that this is possible in due course.
+
+%As a motivating example, we are now going to extend the type theory
+%with a notion of finite set. One could argue that there is no need for
+%such an extension: finite sets, just as any data-structure, can be
+%encoded inside the type theory. A well-known example of such encoding
+%is the Church encoding of natural numbers, which is isomorphic to
+%finite sets. \note{Shall we talk about W-types encoding?}
+
+%However, using encodings is impractical. In the case of finite sets,
+%for instance, we would like to name the elements of the sets. Then, we
+%need to be able to manipulate these elements by their name, instead of
+%their encoding. While we are able to give names to encodings, it is
+%extremely tedious to map the encodings back to a name. Whereas these
+%objects have a structure, the structure is lost during the encoding,
+%when they become anonymous inhabitants of a $\Pi$ or $\Sigma$-type.
+
+%In the simply-typed world, we are used to see types as a coding
+%presentation -- presentation of invariants, presentation of
+%properties. In the dependently-typed world, we also learn to use types
+%as a coding representation: finite sets being good citizens, they
+%ought to be democratically represented at the type level. As we will
+%see, this gives us the ability to name and manipulate them (this is
+%were the democracy analogy goes crazy, I think).
+%\note{Did I got the coding presentation vs. coding representation
+%  story right? No.}
+
+\begin{wstructure}
+<- Implementation [figure]      
+    <- Tags
+        -> Purely informational token
+    <- EnumU
+        -> Universe of finite sets
+    <- EnumT e
+        -> Elements of finite set e
+\end{wstructure}
+
+%The specification of finite sets is presented in
+%Figure~\ref{fig:typing-finite-set}. It is composed of three
+%components. First, we define tags as inhabitants of the $\UId$ type. A
+%tag is solely an informative token, used for diagnostic
+%purposes. Finite sets inhabits the $\EnumU$ type. Unfolding the
+%definition, we get that a finite set is a list of tags. Finally,
+%elements of a finite set $\V{u}$ belong to the corresponding $\EnumT{\V{u}}$
+%type. Intuitively, it corresponds to an index -- a number -- pointing
+%to an element of $\V{u}$.
+
+%\begin{figure}
+
+%\input{figure_finite_sets}
+
+%\caption{Typing rules for finite sets}
+%\label{fig:typing-finite-set}
+
+%\end{figure}
+
+
+\begin{wstructure}
+<- Equipment
+    <- \spi operator
+        <- Equivalent of Pi on finite sets
+        <- First argument: (finite) domain
+        <- Second argument: for each element of the domain, a co-domain
+        -> Inhabitant of \spi: right-nested tuple of solutions
+            <- Skip code for space reasons
+    <- switch operator
+        <- case analyses over x
+        <- index into the \spi tuple to retrieve the corresponding result
+\end{wstructure}
+
+Enumerations come with further machinery. Each \(\EnumT{E}\) needs an
+eliminator, allowing us to branch according to a tag choice. Formally,
+whenever we need such new computational facilities, we add primitive
+operators to the type theory and extend the judgmental equality with
+their computational behavior. However, for compactness and readability, we
+shall write these operators as functional programs (much as we
+model them in Agda).
+
+We first define the `small product' $\SYMBspi$ operator:
+%
+\[\stk{
+%% spi
+\spi{}{}: \PITEL{\V{E}}{\EnumU}\PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To \Set \\
+\begin{array}{@{}l@{\:}l@{\;\;\mapsto\;\;}l}
+\spi{\NilE}{& \V{P}}        & \Unit \\
+\spi{(\ConsE{\V{t}}{\V{E}})}{& \V{P}} & \TIMES{\V{P}\: \Ze}{\spi{\V{E}}{\LAM{\V{x}} \V{P}\: (\Su{\V{x}})}}
+\end{array}
+}\]
+%
+This builds a right-nested
+tuple type, packing a $\V{P}\:\V{i}$ value for each $\V{i}$ in the given
+domain. The step case exposes our notational convention that
+binders scope rightwards as far as possible. These tuples are `jump tables', tabulating dependently
+typed functions.
+We give this functional
+interpretation---the eliminator we need---by the
+$\SYMBswitch$ operator, which, unsurprisingly, iterates projection:
+%
+\[\stk{
+%% switch
+\begin{array}{@{}ll}
+\SYMBswitch : \PITEL{\V{E}}{\EnumU}
+               \PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To
+              \spi{\V{E}}{\V{P}} \To
+               \PITEL{\V{x}}{\EnumT{\V{E}}} \To \V{P}\: \x
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\switch{(\ConsE{\V{t}}{\V{E}})}{\V{P}}{\V{b}}{\Ze}      & \fst{\V{b}} \\
+\switch{(\ConsE{\V{t}}{\V{E}})}{\V{P}}{\V{b}}{(\Su{\V{x}})} & \switch{\V{E}}{(\LAM{\V{x}} \V{P}
+  (\Su{\V{x}}))}{(\snd{\V{b}})}{\V{x}}
+\end{array}
+}\]
+
+%Again, there is a clear equivalent in the full-$\Set$ world: function
+%application. The operational behaviour of $\F{switch}$ is
+%straightforward: $\V{x}$ is peeled off as we move deeper inside the nested
+%tuple $\V{b}$. When $\V{x}$ equals $\Ze$, we simply return the value we are
+%pointing to.
+
+\begin{wstructure}
+<- Equivalent to having a function space over finite sets
+    /> Made non-obvious by low-level encodings
+        <- General issue with codes
+             -> Need to provide an attractive presentation to the user
+    -> Types seem to obfuscate our reading
+        <- Provide ``too much'' information
+        /> False impression: information is actually waiting to be used more widely
+        -> See next Section
+\end{wstructure}
+
+The $\SYMBspi$ and $\SYMBswitch$ operators deliver dependent
+elimination for finite enumerations, but are rather awkward to
+use directly. We do not write the range for a \(\LAMBINDER\)-abstraction, so
+it is galling to supply \(\V{P}\) for functions defined by $\SYMBswitch$.
+Let us therefore find a way to recover the tedious details of the
+encoding from types.
+
+%, they also
+%come with a notion of finite function space. However, we had to
+%extract that intuition from the type, by a careful reading. This seems
+%to contradict our argument in favour of types for coding
+%representation. Here, we are overflown by low-level, very precise type
+%information.
+
+%However, our situation is significantly different from the one we
+%faced with encoded data: while we were suffering from a crucial lack
+%of information, we are now facing too much information, hence losing
+%focus. This is a general issue with the usage of codes, as they convey
+%much more information than what the developer is willing to see. 
+
+%As we will see in the following section, there exists a cure to this
+%problem. In a nutshell, instead of being overflown by typing
+%information, we will put it at work, automatically. The consequence is
+%that, in such system, working with codes is \emph{practical}: one
+%should not be worried by information overload, but how to use it as
+%much as possible. Therefore, we should not be afraid of using codes for
+%practical purposes.
+
+
+\subsection{Type propagation}
+\label{sec:type-propagation}
+
+\begin{wstructure}
+<- Bidirectional type-checking [ref. Turner,Pierce]
+    -> Separating type-checking from type synthesis
+    <- Type checking: push terms into types
+        <- Example: |Pi S T :>: \ x . t| allows us to drop annotation on lambda
+    <- Type synthesis: pull types out of terms
+        <- Example: |x : S l- x :<: S| gives us the type of x
+\end{wstructure}
+
+Our approach to tidying the coding cruft is deeply rooted in the
+bidirectional presentation of type checking from Pierce and
+Turner~\cite{pierce:bidirectional-tc}. They divide
+type inference into two communicating components. In
+\emph{type synthesis}, types are \emph{pulled} out of terms. A
+typical example is a variable in the context:
+%
+\[
+\Rule{\G ; \xS ; \Delta \vdash \Valid}
+     {\G ; \xS ; \Delta \vdash \Bhab{\V{x}}{\M{S}}}
+\]
+%
+Because the context stores the type of the variable, we can extract the
+type whenever the variable is used.
+
+On the other hand, in the \emph{type checking} phase, types are
+\emph{pushed} into terms. We are handed a type together with a term,
+our task consists of checking that the type admits the term. In doing
+so, we can and should use the information
+provided by the type. Therefore, we can relax our requirements on the
+term. Consider \(\LAMBINDER\)-abstraction:
+%
+\[
+\Rule{\G       \vdash \Type{\M{S}} \quad
+      \G ; \xS \vdash \Bhab{\M{t}}{\M{T}}}
+     {\G \vdash \Bhab{\PLAM{\x}{\M{S}} \M{t}}{\PIS{\xS} \M{T}}}
+\]
+%
+The official rules require an annotation specifying the domain.
+However, in type \emph{checking}, the \(\Pi\)-type we push in determines
+the domain, so we can drop the annotation.
+
+\begin{wstructure}
+<- Formalisation: type propagation
+    <- Motivation
+        -> High-level syntax
+            -> exprIn: types are pushed in
+                <- Subject to type *checking*
+            -> exprEx: types are pulled from
+                <- Subject to type *synthesis*
+        -> Translated into our low-level type theory
+        -> Presented as judgements
+    -> Presentation mirrors typing rule of [figure] 
+        -> Ignore identical judgements
+\end{wstructure}
+
+We adapt this idea, yielding a \emph{type
+propagation} system, whose purpose is to elaborate compact
+\emph{expressions} into the terms of our underlying type theory, much
+as in the definition of Epigram
+1~\cite{mcbride.mckinna:view-from-the-left}.  We divide expressions
+into two syntactic categories: $\exprIn$ into which types are pushed,
+and $\exprEx$ from which types are extracted. In the
+bidirectional spirit, the $\exprIn$ are subject to type
+\emph{checking}, while the $\exprEx$---variables and elimination
+forms---admit type \emph{synthesis}. We embed $\exprEx$ into
+$\exprIn$, demanding that the synthesised type coincides with the type
+proposed. The other direction---only necessary to apply
+abstractions or project from pairs---takes a type annotation.
+
+% As the presentation largely
+%mirrors the inference rules of the type theory, we will ignore the
+%judgments that are identical. We refer our reader to the associated
+%technical report~\cite{chapman:desc-tech-report} for the complete
+%system of rules.
+
+\begin{wstructure}
+<- Type synthesis [figure]
+    <- Pull a type out of an exprEx
+    <- Result in a full term, together with its type
+    -> Do *not* need to specify types
+        -> Extracting a term from the context
+        -> Function application
+        -> Projections
+\end{wstructure}
+
+Type synthesis (Fig.~\ref{fig:type-synthesis}) is the \emph{source} of
+types. It follows the \(\exprEx\) syntax, delivering both the
+elaborated term and its type. Terms and expressions never mix: e.g.,
+for application, we instantiate the range with the \emph{term}
+delivered by checking the argument \emph{expression}. Hardwired
+operators are checked as variables.
+
+\begin{figure}
+\input{figure_type_synthesis}
+\caption{Type synthesis}
+\label{fig:type-synthesis}
+\end{figure}
+
+
+\begin{wstructure}
+<- Type checking [figure]
+    <- Push a type in an exprIn
+    <- Result in a full term
+    -> *Use* the type to build the term!
+        -> Domain and co-domain propagation for Pi and Sigma
+        -> Translation of 'tags into EnumTs
+        -> Translation of ['tags ...] into EnumUs
+        -> Finite function space into switch
+\end{wstructure}
+
+Dually, type checking judgments (Fig.~\ref{fig:type-checking})
+are \emph{sinks} for types. From an
+$\exprIn$ and a type pushed into it, they elaborate a low-level
+term, extracting information from the type. Note that we inductively ensure the following `sanity checks':
+%
+\[\stkc{
+\Gamma\Vdash\propag{e}{\pull{t}{T}} \Rightarrow
+  \Gamma\vdash t:T \\
+\Gamma\Vdash\push{\propag{e}{t}}{T} \Rightarrow
+  \Gamma\vdash t:T
+}\]
+
+Canonical set-formers are \emph{checked}: we could exploit
+\(\Set:\Set\) to give them synthesis rules, but this would prejudice
+our future stratification plans. Note that abstraction and pairing are
+free of annotation, as promised. Most of the propagation rules are
+unremarkably structural: we have omitted some mundane rules which just
+follow the pattern, e.g., for \(\UId\).
+
+\begin{figure}
+\input{figure_type_checking}
+\caption{Type checking}
+\label{fig:type-checking}
+\end{figure}
+
+However, we also add abbreviations. We write \(\spl{\M{f}}\),
+pronounced `uncurry \(\M{f}\)' for the function which takes a pair and
+feeds it to \(\M{f}\) one component at a time, letting us name
+them individually. Now, for the finite enumerations, we go to work.
+
+Firstly, we present the codes for enumerations as right-nested tuples
+which, by our LISP convention, we write as unpunctuated lists of tags
+\(\sqr{\etag{t_0}\ldots\etag{t_n}}\).
+Secondly, we can denote an element \emph{by its
+name}: the type pushed in allows us to recover the numerical
+index. We retain the numerical forms to facilitate
+\emph{generic} operations and ensure that shadowing is punished
+fittingly, not fatally.
+Finally, we express functions from enumerations as tuples.
+Any tuple-form, \(\void\) or \(\pair{\_}{\_}{}\), is accepted by the
+function space---the generalised product---if it is accepted by the
+small product. Propagation fills in the appeal to $\SYMBswitch$,
+copying the range information.
+
+Our interactive development tools also perform the
+reverse transformation for intelligible output.
+The encoding of any specific enumeration is thus hidden by these
+translations. Only, and rightly, in enumeration-generic programs is the
+encoding exposed.
+
+\begin{wstructure}
+<- Summary
+    -> Not a novel technique [refs?]
+        /> Used as a boilerplate scrapper
+    -> Make dealing with codes *practical*
+        <- Example: Finite sets/finite function space
+        -> We should not restrain our self in using codes
+            <- We know how to present them to the user
+-> Will extend this machinery in further sections
+\end{wstructure}
+
+%In this section, we have developed a type propagation system based on
+%bidirectional type-checking. Using bidirectional type-checking as a
+%boilerplate scrapper is a well-known
+%technique~\cite{pierce:bidirectional-tc,
+%  xi:bidirectional-tc-bound-array, chlipala:strict-bidirectional-tc}
+%\note{Everybody ok with the citations?}. In our case, we have shown
+%how to instrument bidirectionality to rationalise the expressivity of
+%dependent types. We have illustrated our approach with finite sets. We
+%have abstracted away the low-level presentation of finite sets,
+%offering a convenient syntax instead.
+
+%This example teaches us that we should not be afraid of codes, as soon
+%as type information is available. We have shown how to rationalise
+%this information in a formal presentation. Hence, we have shown that
+%programming with such objects is practical. As we introduce more codes
+%in our theory, we will show how to extend the framework we have
+%developed so far.
+
+Our type propagation mechanism does no constraint
+solving, just copying, so it is just the thin end of the elaboration wedge.
+It can afford us this `assembly
+language' level of civilisation as \(\EnumU\) universe
+specifies not only the \emph{representation} of the
+low-level values in each set as bounded numbers, but also the
+\emph{presentation} of these values as high-level tags. To encode only
+the former, we should merely need the \emph{size} of enumerations, but
+we extract more work from these types by making them more informative.
+We have also, \emph{en passant}, distinguished enumerations which have
+the same cardinality but describe distinct notions:
+\(\EnumT{\sqr{\etag{\CN{red}}\,\etag{\CN{blue}}}}\) is not
+\(\EnumT{\sqr{\etag{\CN{green}}\,\etag{\CN{orange}}}}\).
